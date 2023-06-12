@@ -33,7 +33,7 @@ MapReduceMaster::~MapReduceMaster()
     delete rpc_server;
 }
 
-bool MapReduceMaster::MapReduce(const std::vector<std::string>& file_list, const int reducer_num, const int split_size)
+bool MapReduceMaster::MapReduce(const std::vector<std::string>& file_list, const int reducer_num_, const int split_size)
 {
     std::string method="Map";
     std::vector<std::string> parameters;

@@ -51,7 +51,7 @@ public:
     ~MapReduceMaster();
 
     //目前只支持单文件处理,因为要区分不同文件则不同Mapper应该对应在不同文件的机器
-    bool MapReduce(const std::vector<std::string>& file_list, const int reducer_num=DEFAULT_REDUCER_NUM, const int split_size=DEFAULT_READ_SPLIT_SIZE);
+    bool MapReduce(const std::vector<std::string>& file_list, const int reducer_num_=DEFAULT_REDUCER_NUM, const int split_size=DEFAULT_READ_SPLIT_SIZE);
 
     //向Reducer发送一个预热信息,注册当前MapReduceMaster,并开启心跳
     bool StartReducer(const std::string& reducer_ip, const std::string& reducer_port);
@@ -77,11 +77,12 @@ private:
     const std::string keeepr_ip;
     const std::string keeper_port;
 
+    const int reducer_num;
+
     //用于接收mapper和reducer的task进度信息
     RpcServer* rpc_server;
     pthread_t* rpc_server_thread;
 
-    const int reducer_num;
     std::vector<std::string> files;//需要mapper处理的所有文件的文件名
 
     std::unordered_map<int,ReducerNode*> reducer_map;//reducer对应的ip和port信息
