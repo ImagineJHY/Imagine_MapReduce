@@ -1,30 +1,25 @@
 #ifndef IMAGINE_MAPREDUCE_PARTITIONER_H
 #define IMAGINE_MAPREDUCE_PARTITIONER_H
 
-#include"Callbacks.h"
+#include "Callbacks.h"
 
-namespace Imagine_MapReduce{
+namespace Imagine_MapReduce
+{
 
-template<typename key>
+template <typename key>
 class Partitioner
 {
-    
-public:
+ public:
+    Partitioner(int partition_num = DEFAULT_PARTITION_NUM) : partition_num_(partition_num) {}
 
-    Partitioner(int partition_num_=DEFAULT_PARTITION_NUM):partition_num(partition_num_){}
+    virtual ~Partitioner() {}
 
-    virtual ~Partitioner(){}
+    virtual int Partition(key partition_key) = 0;
 
-    virtual int Partition(key key_)=0;
-
-protected:
-
-    const int partition_num;
+ protected:
+    const int partition_num_;
 };
 
-
-
-}
-
+} // namespace Imagine_MapReduce
 
 #endif
