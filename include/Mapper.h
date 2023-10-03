@@ -3,12 +3,12 @@
 
 #include <memory.h>
 
-#include "Imagine_Rpc/Imagine_Rpc/RpcServer.h"
+#include "RpcServer.h"
 #include "MapReduceUtil.h"
 #include "RecordReader.h"
 #include "LineRecordReader.h"
 #include "MapRunner.h"
-#include "Imagine_Rpc/Imagine_Rpc/RpcClient.h"
+#include "RpcClient.h"
 #include "OutputFormat.h"
 #include "TextOutputFormat.h"
 #include "Callbacks.h"
