@@ -323,7 +323,7 @@ void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
     pthread_create(
         master_node->memory_thread_, nullptr, [](void *argv) -> void *
         {
-            MasterNode* master_node_ = (MasterNode*)argv;
+            MasterNode* master_node = (MasterNode*)argv;
             while (!(master_node->receive_all_.load())) {
                 if (master_node->memory_file_size_ >= DEFAULT_MEMORY_MERGE_SIZE) {
                     master_node->MemoryMerge();
