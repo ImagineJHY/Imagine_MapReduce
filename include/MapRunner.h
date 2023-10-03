@@ -189,13 +189,13 @@ class MapRunner
                 heap.pop();
                 std::string spill_key;
                 std::string spill_value;
-                if (SpillRead(next->fd, spill_key, spill_value)) {
-                    heap.push(new SpillReader(spill_key, spill_value, next->fd));
+                if (SpillRead(next->fd_, spill_key, spill_value)) {
+                    heap.push(new SpillReader(spill_key, spill_value, next->fd_));
                 }
-                write(shuffle_fd, &next->spill_key[0], next->spill_key.size());
+                write(shuffle_fd, &next->spill_key_[0], next->spill_key_.size());
                 char c = ' ';
                 write(shuffle_fd, &c, 1);
-                write(shuffle_fd, &next->spill_value[0], next->spill_value.size());
+                write(shuffle_fd, &next->spill_value_[0], next->spill_value_.size());
                 char cc[] = "\r\n";
                 write(shuffle_fd, cc, 2);
 
