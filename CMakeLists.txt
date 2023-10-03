@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 project(IMAGINE_MAPREDUCE)
 
-set(IMAGINE_SYSTEM_DIR ${PROJECT_SOURCE_DIR}/thirdparty/Imagine_System)
-add_subdirectory(${IMAGINE_SYSTEM_DIR})
+if(TARGET init_all)
+    message("Imagine System init already!")
+else()
+    set(IMAGINE_SYSTEM_DIR ${PROJECT_SOURCE_DIR}/thirdparty/Imagine_System)
+    add_subdirectory(${IMAGINE_SYSTEM_DIR})
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
