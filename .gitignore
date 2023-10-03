@@ -1,0 +1,14 @@
+### CMake ###
+/build/CMakeFiles
+CmakeCache.txt
+cmake_install.cmake
+
+# thirdparty
+/thirdparty/Imagine_System
+
+# lib
+*.bak
+*.so*
+
+# vs
+.vscode
