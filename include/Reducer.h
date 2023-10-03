@@ -200,19 +200,19 @@ std::vector<std::string> Reducer<key, value>::Register(const std::vector<std::st
         throw std::exception();
     }
     MasterNode *new_master = new MasterNode;
-    new_master->file_num = new_master_file_num;
+    new_master->file_num_ = new_master_file_num;
     for (int i = 0; i < new_master_file_num; i++) {
         std::unordered_map<std::string, int> temp_map;
-        new_master->files.insert(std::make_pair(input[i + 1], temp_map));
+        new_master->files_.insert(std::make_pair(input[i + 1], temp_map));
     }
-    new_master->memory_thread = new pthread_t;
-    new_master->disk_thread = new pthread_t;
-    new_master->memory_list_lock = new pthread_mutex_t;
-    new_master->disk_list_lock = new pthread_mutex_t;
-    if (pthread_mutex_init(new_master->memory_list_lock, nullptr) != 0) {
+    new_master->memory_thread_ = new pthread_t;
+    new_master->disk_thread_ = new pthread_t;
+    new_master->memory_list_lock_ = new pthread_mutex_t;
+    new_master->disk_list_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(new_master->memory_list_lock_, nullptr) != 0) {
         throw std::exception();
     }
-    if (pthread_mutex_init(new_master->disk_list_lock, nullptr) != 0) {
+    if (pthread_mutex_init(new_master->disk_list_lock_, nullptr) != 0) {
         throw std::exception();
     }
 
