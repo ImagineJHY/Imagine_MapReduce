@@ -318,33 +318,33 @@ template <typename key, typename value>
 void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
 {
     // 此函数调用时机在Register的map_lock中,故不需要加锁
-    //  std::list<std::string>& memory_list=master_node->memory_file_list;
-    //  std::list<std::string>& disk_list=master_node->disk_file_list;
+    //  std::list<std::string>& memory_list=master_node->memory_file_list_;
+    //  std::list<std::string>& disk_list=master_node->disk_file_list_;
     pthread_create(
-        master_node->memory_thread, nullptr, [](void *argv) -> void *
+        master_node->memory_thread_, nullptr, [](void *argv) -> void *
         {
-            MasterNode* master_node = (MasterNode*)argv;
-            while (!(master_node->receive_all.load())) {
-                if (master_node->memory_file_size >= DEFAULT_MEMORY_MERGE_SIZE) {
+            MasterNode* master_node_ = (MasterNode*)argv;
+            while (!(master_node->receive_all_.load())) {
+                if (master_node->memory_file_size_ >= DEFAULT_MEMORY_MERGE_SIZE) {
                     master_node->MemoryMerge();
                 }
             }
             master_node->MemoryMerge();
-            master_node->memory_merge.store(false);
+            master_node->memory_merge_.store(false);
 
             return nullptr; 
         },
         master_node);
 
-    pthread_detach(*(master_node->memory_thread));
+    pthread_detach(*(master_node->memory_thread_));
 
     pthread_create(
-        master_node->disk_thread, nullptr, [](void *argv) -> void *
+        master_node->disk_thread_, nullptr, [](void *argv) -> void *
         {
 
             MasterNode* master_node = (MasterNode*)argv;
-            while (master_node->memory_merge.load()) {
-                if (master_node->disk_file_list.size() >= DEFAULT_DISK_MERGE_NUM) {
+            while (master_node->memory_merge_.load()) {
+                if (master_node->disk_file_list_.size() >= DEFAULT_DISK_MERGE_NUM) {
                     master_node->DiskMerge();
                 }
             }
@@ -354,7 +354,7 @@ void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
             return nullptr; 
         },
         master_node);
-    pthread_detach(*(master_node->disk_thread));
+    pthread_detach(*(master_node->disk_thread_));
 }
 
 template <typename key, typename value>
