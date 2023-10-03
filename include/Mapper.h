@@ -56,7 +56,7 @@ class Mapper
     MAPTIMER timer_callback_;
 
     // MapReduceUtil::RecordReader record_reader;                       // 提供给用户自定义的recordread函数
-    RecordReader<reader_key, reader_value> *record_reader_class_;       // split迭代器类型
+    RecordReader<reader_key, reader_value> *record_reader_;       // split迭代器类型
     OutputFormat<key, value> *output_format_;
     std::vector<InputSplit *> splits_;
 
@@ -78,7 +78,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, cons
     }
 
     if (record_reader_ == nullptr) {
-        record_reader_class_ = new LineRecordReader();
+        record_reader_ = new LineRecordReader();
     }
     if (map_ == nullptr) {
         SetDefaultMapFunction();
@@ -106,7 +106,7 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
     delete rpc_server_thread_;
     delete[] map_threads_;
 
-    delete record_reader_class_;
+    delete record_reader_;
     delete output_format_;
     delete partitioner_;
 }
@@ -132,7 +132,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
     // std::unordered_map<std::string,std::string> kv_map=record_reader(splits);
     map_threads_ = new pthread_t[splits.size()];
     for (int i = 0; i < splits.size(); i++) {
-        std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_class_->CreateRecordReader(splits[i], i + 1);
+        std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_->CreateRecordReader(splits[i], i + 1);
         // new_record_reader->SetOutputFileName("split"+MapReduceUtil::IntToString(i+1)+".txt");
         MapRunner<reader_key, reader_value, key, value> *runner = new MapRunner<reader_key, reader_value, key, value>(i + 1, splits.size(), input[0], ip_, port_, input[2], input[3], map_, partitioner_, output_format_, rpc_server_);
         runner->SetRecordReader(new_record_reader);
@@ -225,7 +225,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(c
 template <typename reader_key, typename reader_value, typename key, typename value>
 bool Mapper<reader_key, reader_value, key, value>::SetDefaultRecordReader()
 {
-    record_reader_class_ = new LineRecordReader();
+    record_reader_ = new LineRecordReader();
     return true;
 }
 
