@@ -61,14 +61,14 @@ class Reducer
 
             pthread_mutex_unlock(memory_list_lock_);
 
-            pthread_mutex_lock(disk_list_lock);
+            pthread_mutex_lock(disk_list_lock_);
             disk_file_list_.push_back(merge_name);
-            pthread_mutex_unlock(disk_list_lock);
+            pthread_mutex_unlock(disk_list_lock_);
         }
 
         void DiskMerge()
         {
-            pthread_mutex_lock(disk_list_lock);
+            pthread_mutex_lock(disk_list_lock_);
 
             std::vector<std::string> merge_list;
             int merge_num = disk_file_list_.size();
@@ -93,7 +93,7 @@ class Reducer
             }
             delete[] fds;
 
-            pthread_mutex_unlock(disk_list_lock);
+            pthread_mutex_unlock(disk_list_lock_);
         }
 
      public:
@@ -109,7 +109,7 @@ class Reducer
         pthread_t *memory_thread_;
         pthread_t *disk_thread_;
         pthread_mutex_t *memory_list_lock_;
-        pthread_mutex_t *disk_list_lock;
+        pthread_mutex_t *disk_list_lock_;
         std::atomic<int> memory_file_size_;                                              // 存储内存中储存的文件的总大小
         // int memory_file_size_;                                                        // 存储内存中储存的文件的总大小
         std::list<std::string> memory_file_list_;                                        // 存储split文件内容
