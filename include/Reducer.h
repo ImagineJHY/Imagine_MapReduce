@@ -256,8 +256,8 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
         throw std::exception();
     }
     MasterNode *master_node = master_it->second;
-    std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator file_it = master_node->files.find(file_name); // 找到对应的file
-    if (file_it == master_it->second->files.end()) {
+    std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator file_it = master_node->files_.find(file_name); // 找到对应的file
+    if (file_it == master_it->second->files_.end()) {
         // 错误的文件名
         throw std::exception();
         // std::unordered_map<std::string,int> temp_map;
@@ -277,15 +277,15 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     std::vector<std::string> parameters;
     parameters.push_back(split_name);
 
-    pthread_mutex_lock(master_node->memory_list_lock);
-    master_node->memory_file_list.push_front(RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
-    if ((*master_node->memory_file_list.begin()).size()) {
-        printf("split file %s content : \n%s\n", &split_name[0], &(*master_node->memory_file_list.begin())[0]);
+    pthread_mutex_lock(master_node->memory_list_lock_);
+    master_node->memory_file_list_.push_front(RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
+    if ((*master_node->memory_file_list_.begin()).size()) {
+        printf("split file %s content : \n%s\n", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
     } else {
         printf("split file %s content : NoContent!\n", &split_name[0]);
     }
-    master_node->memory_file_size += master_node->memory_file_list.front().size();
-    pthread_mutex_unlock(master_node->memory_list_lock);
+    master_node->memory_file_size_ += master_node->memory_file_list_.front().size();
+    pthread_mutex_unlock(master_node->memory_list_lock_);
 
     pthread_mutex_lock(map_lock_);
     split_it = file_it->second.find(split_name);
@@ -302,8 +302,8 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
 
     if (master_it->second->count == master_it->second->files.size()) {
         // 所有文件接收完毕,可以开始执行
-        master_node->receive_all.store(true);
-        while (master_node->disk_merge.load());
+        master_node->receive_all_.store(true);
+        while (master_node->disk_merge_.load());
         printf("TaskOver!\n");
     }
     pthread_mutex_unlock(map_lock_);
