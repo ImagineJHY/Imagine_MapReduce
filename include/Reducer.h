@@ -295,12 +295,12 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     }
     file_it->second.insert(std::make_pair(split_name, 1));
     master_it = master_map_.find(master_pair);
-    file_it = master_it->second->files.find(file_name);
+    file_it = master_it->second->files_.find(file_name);
     if (file_it->second.size() == split_num) {
-        master_it->second->count++;
+        master_it->second->count_++;
     }
 
-    if (master_it->second->count == master_it->second->files.size()) {
+    if (master_it->second->count_ == master_it->second->files_.size()) {
         // 所有文件接收完毕,可以开始执行
         master_node->receive_all_.store(true);
         while (master_node->disk_merge_.load());
@@ -349,7 +349,7 @@ void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
                 }
             }
             master_node->DiskMerge();
-            master_node->disk_merge.store(false);
+            master_node->disk_merge_.store(false);
 
             return nullptr; 
         },
