@@ -14,6 +14,6 @@ if os.path.isdir(system_dir_path):
     print("Imagine System exist!")
 else:
     #Imagine System不存在创建
-    submodule_command = ["git", "submodule", "add", "-f", "https://github.com/ImagineJHY/Imagine_System.git"]
+    submodule_command = ["git", "submodule", "add", "-f", "git@github.com:ImagineJHY/Imagine_System.git"]
     process = subprocess.Popen(submodule_command, cwd = thirdparty_dir_path)
     process.wait()

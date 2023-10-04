@@ -56,17 +56,6 @@ CMAKE_BINARY_DIR = /home/imagine/MIT6824/Imagine_MapReduce/build
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -77,6 +66,17 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -111,34 +111,34 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-thirdparty/Imagine_System/CMakeFiles/prepare.dir/rule:
-	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f CMakeFiles/Makefile2 thirdparty/Imagine_System/CMakeFiles/prepare.dir/rule
-.PHONY : thirdparty/Imagine_System/CMakeFiles/prepare.dir/rule
+thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/rule:
+	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f CMakeFiles/Makefile2 thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/rule
+.PHONY : thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/rule
 
 # Convenience name for target.
-prepare: thirdparty/Imagine_System/CMakeFiles/prepare.dir/rule
+prepare_submodule: thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/rule
 
-.PHONY : prepare
+.PHONY : prepare_submodule
 
 # fast build rule for target.
-prepare/fast:
-	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f thirdparty/Imagine_System/CMakeFiles/prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/prepare.dir/build
-.PHONY : prepare/fast
+prepare_submodule/fast:
+	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build.make thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build
+.PHONY : prepare_submodule/fast
 
 # Convenience name for target.
-thirdparty/Imagine_System/CMakeFiles/init_all.dir/rule:
-	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f CMakeFiles/Makefile2 thirdparty/Imagine_System/CMakeFiles/init_all.dir/rule
-.PHONY : thirdparty/Imagine_System/CMakeFiles/init_all.dir/rule
+thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/rule:
+	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f CMakeFiles/Makefile2 thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/rule
+.PHONY : thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/rule
 
 # Convenience name for target.
-init_all: thirdparty/Imagine_System/CMakeFiles/init_all.dir/rule
+system_prepare: thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/rule
 
-.PHONY : init_all
+.PHONY : system_prepare
 
 # fast build rule for target.
-init_all/fast:
-	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f thirdparty/Imagine_System/CMakeFiles/init_all.dir/build.make thirdparty/Imagine_System/CMakeFiles/init_all.dir/build
-.PHONY : init_all/fast
+system_prepare/fast:
+	cd /home/imagine/MIT6824/Imagine_MapReduce/build && $(MAKE) -f thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build
+.PHONY : system_prepare/fast
 
 # Help Target
 help:
@@ -146,10 +146,10 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... prepare"
-	@echo "... init_all"
+	@echo "... rebuild_cache"
+	@echo "... prepare_submodule"
+	@echo "... system_prepare"
 .PHONY : help
 
 

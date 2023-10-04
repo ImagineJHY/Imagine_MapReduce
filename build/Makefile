@@ -124,6 +124,19 @@ imagine_mapreduce/fast:
 .PHONY : imagine_mapreduce/fast
 
 #=============================================================================
+# Target rules for targets named build
+
+# Build rule for target.
+build: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 build
+.PHONY : build
+
+# fast build rule for target.
+build/fast:
+	$(MAKE) -f CMakeFiles/build.dir/build.make CMakeFiles/build.dir/build
+.PHONY : build/fast
+
+#=============================================================================
 # Target rules for targets named init
 
 # Build rule for target.
@@ -146,21 +159,34 @@ prepare: cmake_check_build_system
 
 # fast build rule for target.
 prepare/fast:
-	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/prepare.dir/build
+	$(MAKE) -f CMakeFiles/prepare.dir/build.make CMakeFiles/prepare.dir/build
 .PHONY : prepare/fast
 
 #=============================================================================
-# Target rules for targets named init_all
+# Target rules for targets named prepare_submodule
 
 # Build rule for target.
-init_all: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 init_all
-.PHONY : init_all
+prepare_submodule: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 prepare_submodule
+.PHONY : prepare_submodule
 
 # fast build rule for target.
-init_all/fast:
-	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/init_all.dir/build.make thirdparty/Imagine_System/CMakeFiles/init_all.dir/build
-.PHONY : init_all/fast
+prepare_submodule/fast:
+	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build.make thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build
+.PHONY : prepare_submodule/fast
+
+#=============================================================================
+# Target rules for targets named system_prepare
+
+# Build rule for target.
+system_prepare: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 system_prepare
+.PHONY : system_prepare
+
+# fast build rule for target.
+system_prepare/fast:
+	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build
+.PHONY : system_prepare/fast
 
 src/KVBuffer.o: src/KVBuffer.cpp.o
 
@@ -279,9 +305,11 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... imagine_mapreduce"
+	@echo "... build"
 	@echo "... init"
 	@echo "... prepare"
-	@echo "... init_all"
+	@echo "... prepare_submodule"
+	@echo "... system_prepare"
 	@echo "... src/KVBuffer.o"
 	@echo "... src/KVBuffer.i"
 	@echo "... src/KVBuffer.s"

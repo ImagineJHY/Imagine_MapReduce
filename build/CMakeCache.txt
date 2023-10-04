@@ -188,13 +188,40 @@ IMAGINE_MAPREDUCE_BINARY_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/buil
 IMAGINE_MAPREDUCE_SOURCE_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce
 
 //Value Computed by CMake
+IMAGINE_MUDUO_BINARY_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/build/thirdparty/Imagine_System/worker/Imagine_Muduo
+
+//Value Computed by CMake
+IMAGINE_MUDUO_SOURCE_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/thirdparty/Imagine_System/worker/Imagine_Muduo
+
+//Value Computed by CMake
+IMAGINE_RPC_BINARY_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/build/thirdparty/Imagine_System/worker/Imagine_Rpc
+
+//Value Computed by CMake
+IMAGINE_RPC_SOURCE_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/thirdparty/Imagine_System/worker/Imagine_Rpc
+
+//Value Computed by CMake
 IMAGINE_SYSTEM_BINARY_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/build/thirdparty/Imagine_System
 
 //Value Computed by CMake
 IMAGINE_SYSTEM_SOURCE_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/thirdparty/Imagine_System
 
+//Value Computed by CMake
+IMAGINE_ZOOKEEPER_BINARY_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/build/thirdparty/Imagine_System/worker/Imagine_ZooKeeper
+
+//Value Computed by CMake
+IMAGINE_ZOOKEEPER_SOURCE_DIR:STATIC=/home/imagine/MIT6824/Imagine_MapReduce/thirdparty/Imagine_System/worker/Imagine_ZooKeeper
+
 //Dependencies for the target
-imagine_mapreduce_LIB_DEPENDS:STATIC=general;pthread;
+imagine_mapreduce_LIB_DEPENDS:STATIC=general;pthread;general;imagine_rpc;
+
+//Dependencies for the target
+imagine_muduo_LIB_DEPENDS:STATIC=general;pthread;
+
+//Dependencies for the target
+imagine_rpc_LIB_DEPENDS:STATIC=general;pthread;general;imagine_zookeeper;
+
+//Dependencies for the target
+imagine_zookeeper_LIB_DEPENDS:STATIC=general;pthread;general;imagine_muduo;
 
 
 ########################
@@ -295,7 +322,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=2
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
