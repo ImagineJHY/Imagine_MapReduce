@@ -1,11 +1,12 @@
 ### CMake ###
-/build/CMakeFiles
-/build/thirdparty
-CmakeCache.txt
-cmake_install.cmake
+/build/CMakeFiles/
+/build/thirdparty/
+/build/CmakeCache.txt
+/build/cmake_install.cmake
+
 
 # thirdparty
-/thirdparty/Imagine_System
+/thirdparty/Imagine_System/
 
 # lib
 *.bak
