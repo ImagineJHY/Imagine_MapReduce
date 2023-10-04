@@ -1,5 +1,6 @@
 ### CMake ###
 /build/CMakeFiles
+/build/thirdparty
 CmakeCache.txt
 cmake_install.cmake
 

@@ -188,6 +188,45 @@ system_prepare/fast:
 	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build
 .PHONY : system_prepare/fast
 
+#=============================================================================
+# Target rules for targets named imagine_muduo
+
+# Build rule for target.
+imagine_muduo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_muduo
+.PHONY : imagine_muduo
+
+# fast build rule for target.
+imagine_muduo/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build.make thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build
+.PHONY : imagine_muduo/fast
+
+#=============================================================================
+# Target rules for targets named imagine_zookeeper
+
+# Build rule for target.
+imagine_zookeeper: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_zookeeper
+.PHONY : imagine_zookeeper
+
+# fast build rule for target.
+imagine_zookeeper/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build.make thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build
+.PHONY : imagine_zookeeper/fast
+
+#=============================================================================
+# Target rules for targets named imagine_rpc
+
+# Build rule for target.
+imagine_rpc: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_rpc
+.PHONY : imagine_rpc
+
+# fast build rule for target.
+imagine_rpc/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build.make thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build
+.PHONY : imagine_rpc/fast
+
 src/KVBuffer.o: src/KVBuffer.cpp.o
 
 .PHONY : src/KVBuffer.o
@@ -310,6 +349,9 @@ help:
 	@echo "... prepare"
 	@echo "... prepare_submodule"
 	@echo "... system_prepare"
+	@echo "... imagine_muduo"
+	@echo "... imagine_zookeeper"
+	@echo "... imagine_rpc"
 	@echo "... src/KVBuffer.o"
 	@echo "... src/KVBuffer.i"
 	@echo "... src/KVBuffer.s"
