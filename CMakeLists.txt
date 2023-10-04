@@ -26,13 +26,13 @@ if(NOT ${IS_MAKE_PROJECT})
     add_custom_target(
         init
         COMMAND python3 init.py
-        message("Constructing LIB: Starting Imagine_MapReduce lib target init building...")
+        echo "Constructing LIB: Starting Imagine_MapReduce lib target init building..."
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # 在哪个目录下执行命令
     )
     if(EXISTS ${IMAGINE_SYSTEM_DIR}/CMakeLists.txt)
         add_custom_target(
             prepare
-            message("Constructing LIB: thirdparty Imagine_System exists, Starting Imagine_MapReduce lib target prepare building...")
+            echo "Constructing LIB: thirdparty Imagine_System exists, Starting Imagine_MapReduce lib target prepare building..."
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # 在哪个目录下执行命令
         )
         add_dependencies(prepare system_prepare)
@@ -42,7 +42,7 @@ if(NOT ${IS_MAKE_PROJECT})
 
     add_custom_target(
         build
-        message("Constructing LIB: Starting Imagine_MapReduce lib target build building...")
+        echo "Constructing LIB: Starting Imagine_MapReduce lib target build building..."
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # 在哪个目录下执行命令
     )
     add_dependencies(build, imagine_mapreduce)
