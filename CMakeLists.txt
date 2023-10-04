@@ -4,7 +4,7 @@ project(IMAGINE_MAPREDUCE)
 # 定义全局参数 IS_MAKE_PROJECT
 # 若已定义，则当前project作为subModule
 # 若未定义, 则当前project作为mainModule
-if(NOT DEFINED ${IS_MAKE_PROJECT})
+if(NOT DEFINED IS_MAKE_PROJECT)
     message("Constructing LIB: Starting Imagine_MapReduce lib building, lib name is ${PROJECT_NAME}...")
     set(IS_MAKE_PROJECT false)
     set(IMAGINE_SYSTEM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Imagine_System)
