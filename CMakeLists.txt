@@ -4,7 +4,7 @@ project(IMAGINE_MAPREDUCE)
 # 定义全局参数 IS_MAKE_PROJECT
 # 若已定义，则当前project作为subModule
 # 若未定义, 则当前project作为mainModule
-if(NOT DEFINED IS_MAKE_PROJECT)
+if(NOT DEFINED ${IS_MAKE_PROJECT})
     message("Constructing LIB: Starting Imagine_MapReduce lib building, lib name is ${PROJECT_NAME}...")
     set(IS_MAKE_PROJECT false)
     set(IMAGINE_SYSTEM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Imagine_System)
@@ -22,7 +22,7 @@ endif()
 
 # 若当前的任务是编译动态库, 则构建TARGET: init, prepare, build
 # 若当前的任务是生成项目, 则不构建上述TARGET
-if(NOT IS_MAKE_PROJECT)
+if(NOT ${IS_MAKE_PROJECT})
     add_custom_target(
         init
         COMMAND python3 init.py
@@ -45,16 +45,15 @@ if(NOT IS_MAKE_PROJECT)
         message("Constructing LIB: Starting Imagine_MapReduce lib target build building...")
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # 在哪个目录下执行命令
     )
+    add_dependencies(build, imagine_mapreduce)
 else()
     message("Constructing PROJECT: Imagine_MapReduce lib target init is not build...")
     message("Constructing PROJECT: Imagine_MapReduce lib target prepare is not build...")
     message("Constructing PROJECT: Imagine_MapReduce lib target build is not build...")
 endif()
 
-add_dependencies(build, imagine_mapreduce)
-
 # 设置动态库的TARGET的头文件, 源文件, 依赖
 file(GLOB IMAGINE_MAPREDUCE_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 add_library(imagine_mapreduce SHARED ${IMAGINE_MAPREDUCE_SRC_LIST})
-target_include_directories(imagine_mapreduce ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(imagine_mapreduce ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(imagine_mapreduce pthread)
