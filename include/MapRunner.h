@@ -49,7 +49,7 @@ class MapRunner
     // }
 
     MapRunner(int split_id, int split_num, const std::string file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &master_ip, const std::string &master_port, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, RpcServer *rpc_server, int partition_num = DEFAULT_PARTITION_NUM)
-        : split_id_(split_id), split_num_(split_num), file_name_(file_name), mapper_ip_(mapper_ip_), mapper_port_(mapper_port), master_ip_(master_ip), master_port_(master_port), map_(map), partitioner_(partitioner), output_format_(output_format), rpc_server_(rpc_server), partition_num_(partition_num)
+        : split_id_(split_id), split_num_(split_num), file_name_(file_name), mapper_ip_(mapper_ip), mapper_port_(mapper_port), master_ip_(master_ip), master_port_(master_port), map_(map), partitioner_(partitioner), output_format_(output_format), rpc_server_(rpc_server), partition_num_(partition_num)
     {
         buffer_ = new KVBuffer(partition_num_, split_id_, spill_files_);
         Init();
