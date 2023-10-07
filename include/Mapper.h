@@ -70,7 +70,7 @@ class Mapper
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, MAPTIMER timer_callback, const std::string &keeper_ip, const std::string &keeper_port)
-                                            : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), record_reader_(record_reader), partitioner_(partitioner), output_format_(output_format), timer_callback_(timer_callback)
+                                            : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
 {
     rpc_server_thread_ = new pthread_t;
     if (!rpc_server_thread_) {
@@ -131,7 +131,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
     // 将数据按要求转换成kv数据
     // std::unordered_map<std::string,std::string> kv_map=record_reader(splits);
     map_threads_ = new pthread_t[splits.size()];
-    for (int i = 0; i < splits.size(); i++) {
+    for (size_t i = 0; i < splits.size(); i++) {
         std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_->CreateRecordReader(splits[i], i + 1);
         // new_record_reader->SetOutputFileName("split"+MapReduceUtil::IntToString(i+1)+".txt");
         MapRunner<reader_key, reader_value, key, value> *runner = new MapRunner<reader_key, reader_value, key, value>(i + 1, splits.size(), input[0], ip_, port_, input[2], input[3], map_, partitioner_, output_format_, rpc_server_);
@@ -143,7 +143,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
                 MapRunner<reader_key, reader_value, key, value> *runner = (MapRunner<reader_key, reader_value, key, value> *)argv;
                 MAP map = runner->GetMap();
                 std::shared_ptr<RecordReader<reader_key, reader_value>> reader = runner->GetRecordReader();
-                OutputFormat<key, value> *output_format = runner->GetOutPutFormat();
+                // OutputFormat<key, value> *output_format = runner->GetOutPutFormat();
 
                 // 连接Master
                 int sockfd;
@@ -273,6 +273,7 @@ template <typename reader_key, typename reader_value, typename key, typename val
 bool Mapper<reader_key, reader_value, key, value>::SetDefaultPartitioner()
 {
     partitioner_ = new StringPartitioner();
+
     return true;
 }
 
@@ -280,6 +281,8 @@ template <typename reader_key, typename reader_value, typename key, typename val
 bool Mapper<reader_key, reader_value, key, value>::SetDefaultOutputFormat()
 {
     output_format_ = new TextOutputFormat();
+
+    return true;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -289,7 +292,9 @@ void Mapper<reader_key, reader_value, key, value>::loop()
         rpc_server_thread_, nullptr, [](void *argv) -> void *
         {
             RpcServer* rpc_server = (RpcServer*)argv;
-            rpc_server->loop(); 
+            rpc_server->loop();
+
+            return nullptr;
         }, 
         this->rpc_server_);
     pthread_detach(*rpc_server_thread_);

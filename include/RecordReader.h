@@ -10,7 +10,7 @@ template <typename reader_key, typename reader_value>
 class RecordReader
 {
  public:
-    RecordReader(InputSplit *split = nullptr, int split_id = 0) : split_(split), split_id_(split_id), file_name_(split != nullptr ? split->GetFileName() : "") {}
+    RecordReader(InputSplit *split = nullptr, int split_id = 0) : split_id_(split_id), file_name_(split != nullptr ? split->GetFileName() : ""), split_(split) {}
 
     virtual ~RecordReader()
     {
