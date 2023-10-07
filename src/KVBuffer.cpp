@@ -130,7 +130,7 @@ bool KVBuffer::Spilling()
         pthread_mutex_lock(buffer_lock_);
         is_spilling_ = true;
         int old_equator = equator_;
-        int old_kv_idx = kv_idx_;
+        // int old_kv_idx = kv_idx_;
         int old_meta_idx = meta_idx_ % buffer_size_;
         equator_ = ((meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) / 2 + kv_idx_) % buffer_size_;
         kv_border_ = (meta_idx_ + 1) % buffer_size_;
@@ -186,4 +186,6 @@ bool KVBuffer::Spilling()
         // 尝试唤醒
     }
     quit_ = true;
+
+    return true;
 }

@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(IMAGINE_MAPREDUCE)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g  -std=c++11 -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -Wall -Werror")
+
 # 定义全局参数 IS_MAKE_PROJECT
 # 若已定义，则当前project作为subModule
 # 若未定义, 则当前project作为mainModule

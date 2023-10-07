@@ -24,11 +24,14 @@ void MapReduceUtil::DefaultMapFunction(const std::string &read_split)
     //     write(shuffle_fd[hash_fd],"\r\n",2);
     //     //printf("string %s occur %d times!\n",&(it->first[0]),it->second);
     // }
-    for (int i = idx + 1; i < read_split.size(); i++) {
+    for (size_t i = idx + 1; i < read_split.size(); i++) {
         if (read_split[i] == '\r' && read_split[i + 1] == '\n') {
             std::string temp_string = read_split.substr(idx, i - idx);
             int hash_fd = hash_func(temp_string) % 5;
-            int ret = write(shuffle_fd[hash_fd], &temp_string[0], temp_string.size());
+            ssize_t ret = write(shuffle_fd[hash_fd], &temp_string[0], temp_string.size());
+            if (ret < -10000) {
+                printf("ret < -10000 hhhhh\n");
+            }
             // printf("ret is %d\n",ret);
             write(shuffle_fd[hash_fd], "\r\n", 2);
             idx = i + 2;
@@ -44,7 +47,7 @@ void MapReduceUtil::DefaultMapFunction(const std::string &read_split)
 void MapReduceUtil::DefaultMapFunctionHashHandler(const std::string &input, std::unordered_map<std::string, int> &kv_map)
 {
     int idx = 0;
-    for (int i = 0; i < input.size(); i++) {
+    for (size_t i = 0; i < input.size(); i++) {
         if (input[i] == '\r' && input[i + 1] == '\n') {
             std::unordered_map<std::string, int>::iterator it = kv_map.find(input.substr(idx, i - idx));
             // printf("get string %s\n",&(input.substr(idx,i-idx))[0]);
@@ -82,7 +85,7 @@ void MapReduceUtil::DefaultReduceFunction(const std::string &input)
         }
         read_string.resize(tail_string.size() + ret);
         tail_string.resize(0);
-        for (int i = read_string.size() - 1; i >= 0; i--) {
+        for (size_t i = read_string.size() - 1; i >= 0; i--) {
             if (i > 0 && read_string[i] == '\n' && read_string[i - 1] == '\r') {
                 if (i == read_string.size() - 1) {
                     break; // 刚好读完一句
@@ -107,7 +110,7 @@ void MapReduceUtil::DefaultReduceFunctionHashHandler(const std::string &input, s
 {
     int idx = 0;
     int split_idx; // 空格位置
-    for (int i = 0; i < input.size(); i++) {
+    for (size_t i = 0; i < input.size(); i++) {
         if (input[i] == ' ') {
             split_idx = i;
         } else if (input[i] == '\r' && input[i + 1] == '\n') {
@@ -203,7 +206,7 @@ std::string MapReduceUtil::DoubleToString(double input)
 bool MapReduceUtil::ReadKVReaderFromMemory(const std::string &content, int &idx, std::string &key, std::string &value) // 从spill文件读取kv对
 {
     // 假设空格是key和value的分隔符,且每个kv以\r\n结尾,且kv中不包含这三个字符
-    if (idx >= content.size()) {
+    if (static_cast<size_t>(idx) >= content.size()) {
         return false;
     }
     int start_idx = idx;

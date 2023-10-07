@@ -118,7 +118,7 @@ class KVBuffer
 
  public:
     KVBuffer(int partition_num, int split_id, std::vector<std::vector<std::string>> &spill_files)
-        : buffer_size_(DEFAULT_SPLIT_BUFFER_SIZE), spill_size_(DEFAULT_SPILL_SIZE), partition_num_(partition_num), split_id_(split_id), spill_files_(spill_files)
+        : partition_num_(partition_num), split_id_(split_id), buffer_size_(DEFAULT_SPLIT_BUFFER_SIZE), spill_size_(DEFAULT_SPILL_SIZE), spill_files_(spill_files)
     {
         buffer_lock_ = new pthread_mutex_t;
         if (pthread_mutex_init(buffer_lock_, nullptr) != 0) {
@@ -164,7 +164,7 @@ class KVBuffer
 
     bool WriteJudgementWithSpilling(const std::pair<char *, char *> &content)
     {
-        if ((kv_idx_ <= kv_border_ ? kv_border_ - kv_idx_ : buffer_size_ - kv_idx_ + kv_border_) < strlen((char *)(content.first)) + strlen((char *)(content.second)) || 
+        if (static_cast<size_t>(kv_idx_ <= kv_border_ ? kv_border_ - kv_idx_ : buffer_size_ - kv_idx_ + kv_border_) < strlen((char *)(content.first)) + strlen((char *)(content.second)) || 
             (meta_border_ <= meta_idx_ ? meta_idx_ - meta_border_ : meta_idx_ + buffer_size_ - meta_border_) < DEFAULT_META_SIZE) {
             return false;
         }
@@ -174,7 +174,7 @@ class KVBuffer
 
     bool WriteJudgementWithoutSpilling(const std::pair<char *, char *> &content)
     {
-        if (meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1 > strlen((char *)(content.first)) + strlen((char *)(content.second)) + DEFAULT_META_SIZE) {
+        if (static_cast<size_t>(meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) > strlen((char *)(content.first)) + strlen((char *)(content.second)) + DEFAULT_META_SIZE) {
             return true;
         }
 

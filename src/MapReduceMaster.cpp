@@ -38,7 +38,7 @@ bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const
     std::string method = "Map";
     std::vector<std::string> parameters;
 
-    for (int i = 0; i < file_list.size(); i++) {
+    for (size_t i = 0; i < file_list.size(); i++) {
         files_.push_back(file_list[i]);
         parameters.push_back(file_list[i]);
     }
@@ -53,6 +53,8 @@ bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const
     }
 
     RpcClient::Caller(method, parameters, keepr_ip_, keeper_port_);
+
+    return true;
 }
 
 bool MapReduceMaster::StartReducer(const std::string &reducer_ip, const std::string &reducer_port)
@@ -68,7 +70,7 @@ bool MapReduceMaster::StartReducer(const std::string &reducer_ip, const std::str
     std::string method_name = "Register";
     std::vector<std::string> parameters;
     parameters.push_back(MapReduceUtil::IntToString(files_.size()));
-    for (int i = 0; i < files_.size(); i++) {
+    for (size_t i = 0; i < files_.size(); i++) {
         parameters.push_back(files_[i]);
     }
     // printf("master_ip is %s , master_port is %s\n",&ip[0],&port[0]);
@@ -179,10 +181,10 @@ std::string MapReduceMaster::ProcessMapperMessage(const std::vector<std::string>
         const std::string &mapper_port = message[5];
         const std::string &split_num = message[6];
         std::vector<std::string> shuffle_list;
-        for (int i = 7; i < message.size(); i++) {
+        for (size_t i = 7; i < message.size(); i++) {
             shuffle_list.push_back(std::move(message[i]));
         }
-        if (reducer_num_ != shuffle_list.size()) {
+        if (static_cast<size_t>(reducer_num_) != shuffle_list.size()) {
             throw std::exception();
         }
         for (int i = 1; i <= reducer_num_; i++) {
@@ -219,6 +221,8 @@ std::string MapReduceMaster::ProcessReducerMessage(const std::vector<std::string
         printf("reducer's processing is %s\n", &message[3][0]);
         return "";
     }
+
+    return "";
 }
 
 void MapReduceMaster::loop()
@@ -237,9 +241,9 @@ void MapReduceMaster::loop()
 
 bool MapReduceMaster::SetTaskFile(std::vector<std::string> &files)
 {
-    files.clear();
-    for (int i = 0; i < files.size(); i++) {
-        files.push_back(files[i]);
+    files_.clear();
+    for (size_t i = 0; i < files.size(); i++) {
+        files_.push_back(files[i]);
     }
 
     return true;
