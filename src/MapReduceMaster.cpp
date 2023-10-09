@@ -201,6 +201,7 @@ std::string MapReduceMaster::ProcessMapperMessage(const std::vector<std::string>
                     // 再次确认
                     printf("Searching Reducer!\n");
                     RpcClient::CallerOne("Reduce", keepr_ip_, keeper_port_, it->second->ip_, it->second->port_); // 获取一个reducer
+                    printf("GET REDUCER IP:%s, PORT:%s\n", &(it->second->ip_[0]), &(it->second->port_[0]));
                     StartReducer(it->second->ip_, it->second->port_);                                           // 启动reducer与master的连接
                     it->second->is_ready_.store(true);
                     pthread_mutex_unlock(it->second->reducer_lock_);

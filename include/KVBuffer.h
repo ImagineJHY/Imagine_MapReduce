@@ -144,7 +144,9 @@ class KVBuffer
 
         spill_id_ = 1;
         spill_buffer_ = false;
-        quit_ = false;
+        quit_ = new bool(false);
+        first_spilling_ = false;
+        delete_this_ = false;
 
         spill_files_.resize(partition_num_);
     }
@@ -184,12 +186,19 @@ class KVBuffer
     bool SpillBuffer()
     {
         spill_buffer_ = true;
-        while (!quit_) {
+        while (!(*quit_)) {
             // pthread_cond_signal(spill_cond);
             pthread_cond_broadcast(spill_cond_);
         }
+        delete quit_;
+        delete_this_ = true;
 
         return true;
+    }
+
+    bool IsDeleteConditionSatisfy()
+    {
+        return delete_this_;
     }
 
  private:
@@ -216,7 +225,9 @@ class KVBuffer
     std::vector<std::vector<std::string>> &spill_files_;
 
     bool spill_buffer_;
-    bool quit_;
+    bool* quit_;
+    bool first_spilling_;
+    public: bool delete_this_;
 };
 
 } // namespace Imagine_MapReduce

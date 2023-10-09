@@ -114,7 +114,11 @@ bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int parti
 
 bool KVBuffer::Spilling()
 {
-    while (!spill_buffer_ || (meta_idx_ < kv_idx_ ? kv_idx_ - meta_idx_ : buffer_size_ - (meta_idx_ - kv_idx_)) != 1) {
+    pthread_mutex_lock(buffer_lock_);
+    int written_size = meta_idx_ < kv_idx_ ? kv_idx_ - meta_idx_ : buffer_size_ - (meta_idx_ - kv_idx_);
+    pthread_mutex_unlock(buffer_lock_);
+    while (!first_spilling_ || !spill_buffer_ || written_size != 1) {
+        first_spilling_ = true;
         pthread_mutex_lock(spill_lock_);
 
         pthread_mutex_lock(buffer_lock_);
@@ -184,8 +188,13 @@ bool KVBuffer::Spilling()
             close(fds[i]);
         }
         // 尝试唤醒
+
+
+        pthread_mutex_lock(buffer_lock_);
+        written_size = meta_idx_ < kv_idx_ ? kv_idx_ - meta_idx_ : buffer_size_ - (meta_idx_ - kv_idx_);
+        pthread_mutex_unlock(buffer_lock_);
     }
-    quit_ = true;
+    *quit_ = true;
 
     return true;
 }

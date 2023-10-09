@@ -34,6 +34,7 @@ class MapReduceMaster
         ReducerNode() : ip_(""), port_(""), is_ready_(false)
         {
             reducer_lock_ = new pthread_mutex_t;
+            pthread_mutex_init(reducer_lock_, nullptr);
         }
 
      public:

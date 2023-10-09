@@ -142,6 +142,8 @@ class MapRunner
                 KVBuffer* buffer = (KVBuffer*)argv;
                 buffer->Spilling();
 
+                while (!(buffer->IsDeleteConditionSatisfy()));
+
                 delete buffer;
 
                 return nullptr;
