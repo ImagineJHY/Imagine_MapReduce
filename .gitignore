@@ -1,0 +1,17 @@
+### CMake ###
+/build/CMakeFiles/
+/build/thirdparty/
+/build/CMakeCache.txt
+/build/cmake_install.cmake
+
+
+# thirdparty
+/thirdparty
+
+# lib
+*.bak
+*.so*
+*.a
+
+# vs
+.vscode

@@ -1,0 +1,3 @@
+[submodule "thirdparty/Imagine_System"]
+	path = thirdparty/Imagine_System
+	url = git@github.com:ImagineJHY/Imagine_System.git
