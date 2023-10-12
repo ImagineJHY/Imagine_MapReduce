@@ -6,7 +6,7 @@
 
 // template<typename key,typename value>
 // Reducer<key,value>::Reducer(int port_, ReduceCallback reduce_)
-// {
+// {   
 //     if(reduce_)reduce=reduce_;
 //     else SetDefaultReduceFunction();
 
