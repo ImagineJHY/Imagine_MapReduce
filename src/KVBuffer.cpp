@@ -1,6 +1,7 @@
-#include "KVBuffer.h"
+#include "Imagine_MapReduce/KVBuffer.h"
 
-using namespace Imagine_MapReduce;
+namespace Imagine_MapReduce
+{
 
 bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int partition_idx)
 {
@@ -198,3 +199,5 @@ bool KVBuffer::Spilling()
 
     return true;
 }
+
+} // namespace Imagine_MapReduce

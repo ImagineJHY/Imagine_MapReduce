@@ -1,15 +1,15 @@
 #ifndef IMAGINE_MAPREDUCE_MAPRUNNER_H
 #define IMAGINE_MAPREDUCE_MAPRUNNER_H
 
-#include <string.h>
-#include <queue>
-
 #include "RecordReader.h"
 #include "Mapper.h"
 #include "OutputFormat.h"
 #include "KVBuffer.h"
 #include "Callbacks.h"
 #include "Partitioner.h"
+
+#include <string.h>
+#include <queue>
 
 namespace Imagine_MapReduce
 {
@@ -170,7 +170,7 @@ class MapRunner
         -" "作为key和value的分隔符
         -"\r\n"作为每一对数据的分隔符
         */
-        printf("Start Combining!\n");
+        LOG_INFO("Start Combining!");
         const int spill_num = spill_files_[0].size();
         for (int i = 0; i < partition_num_; i++) {
             std::string shuffle_file = "split" + MapReduceUtil::IntToString(split_id_) + "_shuffle_" + MapReduceUtil::IntToString(i + 1) + ".txt";

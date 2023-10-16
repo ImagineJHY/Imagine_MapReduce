@@ -1,19 +1,19 @@
 #ifndef IMAGINE_MAPREDUCE_MAPPER_H
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
-#include <memory.h>
-
-#include "RpcServer.h"
+#include "Imagine_Rpc/RpcServer.h"
+#include "Imagine_Rpc/RpcClient.h"
 #include "MapReduceUtil.h"
 #include "RecordReader.h"
 #include "LineRecordReader.h"
 #include "MapRunner.h"
-#include "RpcClient.h"
 #include "OutputFormat.h"
 #include "TextOutputFormat.h"
 #include "Callbacks.h"
 #include "Partitioner.h"
 #include "StringPartitioner.h"
+
+#include <memory.h>
 
 namespace Imagine_MapReduce
 {
@@ -202,7 +202,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(c
 {
     std::vector<std::string> output;
     std::string content;
-    printf("get file %s\n", &input[0][0]);
+    LOG_INFO("get file %s", &input[0][0]);
     int fd = open(&input[0][0], O_RDWR);
     while (1) {
         char buffer[1024];
@@ -305,7 +305,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sock
 {
     // printf("this is timer callback!\n");
     if (reader.use_count() == 1) {
-        printf("This Mapper Task Over!\n");
+        LOG_INFO("This Mapper Task Over!");
         return;
     }
     // printf("sockfd is %d\n",sockfd);
@@ -321,7 +321,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sock
     if (temp_recv.size() && temp_recv[0] == "Receive") {
         // printf("connect ok!\n");
     } else {
-        printf("connect error!\n");
+        LOG_INFO("connect error!");
     }
 }
 

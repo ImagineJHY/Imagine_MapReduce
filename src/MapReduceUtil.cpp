@@ -1,10 +1,12 @@
-#include "MapReduceUtil.h"
+#include "Imagine_MapReduce/MapReduceUtil.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <vector>
 #include <sys/stat.h>
 
-using namespace Imagine_MapReduce;
+namespace Imagine_MapReduce
+{
 
 void MapReduceUtil::DefaultMapFunction(const std::string &read_split)
 {
@@ -30,7 +32,7 @@ void MapReduceUtil::DefaultMapFunction(const std::string &read_split)
             int hash_fd = hash_func(temp_string) % 5;
             ssize_t ret = write(shuffle_fd[hash_fd], &temp_string[0], temp_string.size());
             if (ret < -10000) {
-                printf("ret < -10000 hhhhh\n");
+                LOG_INFO("ret < -10000 hhhhh");
             }
             // printf("ret is %d\n",ret);
             write(shuffle_fd[hash_fd], "\r\n", 2);
@@ -305,3 +307,5 @@ bool MapReduceUtil::MergeKVReaderFromDisk(const int *const fds, const int fd_num
 
     return true;
 }
+
+} // namespace Imagine_MapReduce

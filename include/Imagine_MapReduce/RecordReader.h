@@ -17,7 +17,7 @@ class RecordReader
         if (split_) {
             delete split_;
         }
-        printf("delete recordreader!\n");
+        LOG_INFO("delete recordreader!");
     }
 
     virtual bool NextKeyValue() = 0;

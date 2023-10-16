@@ -1,10 +1,10 @@
 #ifndef IMAGINE_MAPREDUCE_KVBUFFER_H
 #define IMAGINE_MAPREDUCE_KVBUFFER_H
 
-#include <fcntl.h>
-
 #include "MapReduceUtil.h"
 #include "Callbacks.h"
+
+#include <fcntl.h>
 
 namespace Imagine_MapReduce
 {
@@ -153,7 +153,7 @@ class KVBuffer
 
     ~KVBuffer()
     {
-        printf("delete buffer\n");
+        LOG_INFO("delete buffer");
         delete[] buffer_;
         delete buffer_lock_;
         delete spill_lock_;

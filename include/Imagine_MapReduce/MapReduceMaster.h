@@ -1,14 +1,11 @@
 #ifndef IMAGINE_MAPREDUCE_MASTER_H
 #define IMAGINE_MAPREDUCE_MASTER_H
 
-#include <atomic>
-
-#include <EventLoop.h>
-#include <RpcServer.h>
-
+#include "Imagine_Muduo/EventLoop.h"
+#include "Imagine_Rpc/RpcServer.h"
 #include "Callbacks.h"
 
-using namespace Imagine_Rpc;
+#include <atomic>
 
 /*
 MapReduce通信格式
@@ -81,7 +78,7 @@ class MapReduceMaster
     const int reducer_num_;
 
     // 用于接收mapper和reducer的task进度信息
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
     pthread_t *rpc_server_thread_;
 
     std::vector<std::string> files_;                        // 需要mapper处理的所有文件的文件名

@@ -1,11 +1,11 @@
 #ifndef IMAGINE_MAPREDUCE_TEXTOUTPUTFORMAT_H
 #define IMAGINE_MAPREDUCE_TEXTOUTPUTFORMAT_H
 
-#include <string>
-#include <memory.h>
-
 #include "OutputFormat.h"
 #include "MapReduceUtil.h"
+
+#include <string>
+#include <memory.h>
 
 namespace Imagine_MapReduce
 {

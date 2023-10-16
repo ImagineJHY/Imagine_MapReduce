@@ -1,15 +1,13 @@
 #ifndef IMAGINE_MAPREDUCE_REDUCER_H
 #define IMAGINE_MAPREDUCE_REDUCER_H
 
-#include <fcntl.h>
-#include <atomic>
-// #include<list>
-
-#include <RpcServer.h>
-#include <RpcClient.h>
-
+#include "Imagine_Rpc/RpcServer.h"
+#include "Imagine_Rpc/RpcClient.h"
 #include "MapReduceUtil.h"
 #include "Callbacks.h"
+
+#include <fcntl.h>
+#include <atomic>
 
 namespace Imagine_MapReduce
 {
@@ -190,7 +188,7 @@ std::vector<std::string> Reducer<key, value>::Register(const std::vector<std::st
         -3.master_ip
         -4.master_port
     */
-    printf("This is Register Method !\n");
+    LOG_INFO("This is Register Method !");
     // for(int i=0;i<input.size();i++)printf("%s\n",&input[i][0]);
     int new_master_file_num = MapReduceUtil::StringToInt(input[0]);
     std::pair<std::string, std::string> new_master_pair = std::make_pair(input[new_master_file_num + 1], input[new_master_file_num + 2]);
@@ -240,7 +238,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
         -6.master_ip:master的ip
         -7.master_port:master的port
     */
-    printf("this is Reduce Method !\n");
+    LOG_INFO("this is Reduce Method !");
     // for(int i=0;i<input.size();i++)printf("%s\n",&input[i][0]);
     int split_num = MapReduceUtil::StringToInt(input[0]);
     std::string file_name = input[1];
@@ -280,9 +278,9 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     pthread_mutex_lock(master_node->memory_list_lock_);
     master_node->memory_file_list_.push_front(RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
     if ((*master_node->memory_file_list_.begin()).size()) {
-        printf("split file %s content : \n%s\n", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
+        LOG_INFO("split file %s content : %s", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
     } else {
-        printf("split file %s content : NoContent!\n", &split_name[0]);
+        LOG_INFO("split file %s content : NoContent!", &split_name[0]);
     }
     master_node->memory_file_size_ += master_node->memory_file_list_.front().size();
     pthread_mutex_unlock(master_node->memory_list_lock_);
@@ -304,7 +302,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
         // 所有文件接收完毕,可以开始执行
         master_node->receive_all_.store(true);
         while (master_node->disk_merge_.load());
-        printf("TaskOver!\n");
+        LOG_INFO("TaskOver!");
     }
     pthread_mutex_unlock(map_lock_);
 

@@ -1,5 +1,48 @@
 # Readme
 
+## 写在最前
+有同学需要原始参考资料完成MapReduce项目, 这里附上我所参考的资料连接
+
+- MapReduce:
+  - MapReduce详解及代码实现: 介绍最基本的MapReduce逻辑
+                  https://blog.csdn.net/prefect_start/article/details/121409054
+
+  - MapReduce基础知识: 介绍Hadoop实现的MapReduce基础
+                  https://blog.csdn.net/weixin_46141936/article/details/121171685
+
+  - MapReduce InputFormat: 介绍InputFormat实现细节
+                  https://blog.csdn.net/qq_37964379/article/details/116168386
+
+  - MapReduce源码解析之InputFormat: 介绍InputFormat实现细节
+                  https://zhuanlan.zhihu.com/p/55842845
+
+  - 图文详解MapReduce工作流程: 介绍Hadoop实现的MapReduce的完整工作流程
+                  https://blog.csdn.net/Shockang/article/details/117970151
+
+  - MapReduce工作流程最详细解析: 介绍Hadoop实现的MapReduce的完整工作流程
+                  https://zhuanlan.zhihu.com/p/388553083
+
+  - MapReduce: 介绍Hadoop实现的MapReduce的完整工作流程
+                  https://zhuanlan.zhihu.com/p/67565742
+
+  - MapReduce的shuffle过程详解: 介绍shuffle过程
+                  https://blog.csdn.net/u013378306/article/details/109273004
+
+  - 深入分析MapReduce之Shuffle原理和数据处理流程: 介绍shuffle过程, 变收费了...
+                  https://blog.csdn.net/qq_26803795/article/details/104929936
+
+  - MapReduce环形缓冲区的概念以及理解: 介绍环形缓冲区的实现
+                  https://dhexx.cn/news/show-3690482.html?action=onClick
+  
+- RPC及ZK
+  - C++实现轻量级RPC分布式网络通信框架: 介绍RPC配合ZK的工作流程
+                  https://blog.csdn.net/T_Solotov/article/details/124107667
+                                      
+  - RPC框架的基础概念: 介绍基本的RPC通信
+                  https://blog.csdn.net/T_Solotov/article/details/124170856
+  
+  - JavaGuide(ZK篇): 简单介绍ZK的实现
+
 ## 简介
 
 Imagine_MapReduce参考Hadoop中MapReduce的设计思路进行了框架设计，主要功能有：
