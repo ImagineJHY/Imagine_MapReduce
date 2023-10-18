@@ -187,14 +187,14 @@ Reducer<key, value>::Reducer(std::string profile_name)
         throw std::exception();
     }
 
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
 
 template <typename key, typename value>
 Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, ReduceCallback reduce)
-                             : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), reduce_(reduce)
+                             : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), reduce_(reduce)
 {
     if (reduce_ == nullptr) {
         SetDefaultReduceFunction();
@@ -205,7 +205,7 @@ Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, con
         throw std::exception();
     }
 
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
