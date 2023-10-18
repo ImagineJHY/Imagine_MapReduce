@@ -5,7 +5,7 @@
 #include "Mapper.h"
 #include "OutputFormat.h"
 #include "KVBuffer.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 #include "Partitioner.h"
 
 #include <string.h>

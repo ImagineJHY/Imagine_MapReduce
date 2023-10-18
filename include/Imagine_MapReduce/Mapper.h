@@ -9,7 +9,7 @@
 #include "MapRunner.h"
 #include "OutputFormat.h"
 #include "TextOutputFormat.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 #include "Partitioner.h"
 #include "StringPartitioner.h"
 
@@ -22,9 +22,21 @@ template <typename reader_key, typename reader_value, typename key, typename val
 class Mapper
 {
  public:
+    Mapper();
+
+    Mapper(std::string profile_name);
+
     Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader = nullptr, MAP map = nullptr, Partitioner<key> *partitioner = nullptr, OutputFormat<key, value> *output_format = nullptr, MAPTIMER timer_callback = nullptr, const std::string &keeper_ip = "", const std::string &keeper_port = "");
 
     ~Mapper();
+
+    void Init(std::string profile_name);
+
+    void InitProfilePath(std::string profile_name);
+
+    void GenerateSubmoduleProfile(YAML::Node config);
+
+    void SetDefault();
 
     // Rpc通信调用
     std::vector<std::string> Map(const std::vector<std::string> &input);
@@ -45,13 +57,26 @@ class Mapper
 
     void loop();
 
+  private:
+    std::string ip_;
+    std::string port_;
+    std::string zookeeper_ip_;
+    std::string zookeeper_port_;
+    // size_t reducer_num_;
+    // size_t split_size_;
+    size_t thread_num_;
+    std::string log_name_;
+    std::string log_path_;
+    size_t max_log_file_size_;
+    bool async_log_;
+    bool singleton_log_mode_;
+    std::string log_title_;
+    bool log_with_timestamp_;
+
+    std::string profile_path_;
+    std::string rpc_profile_name_;
+
  private:
-    const std::string ip_;
-    const std::string port_;
-
-    const std::string keeper_ip_;
-    const std::string keeper_port_;
-
     MAP map_;                                                           // 提供给用户自定义的map函数
     MAPTIMER timer_callback_;
 
@@ -64,9 +89,26 @@ class Mapper
 
     RpcServer *rpc_server_;
     pthread_t *rpc_server_thread_;
+    Imagine_Tool::Logger* logger_;
 
     Partitioner<key> *partitioner_;
 };
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper()
+{
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name)
+{
+    Init(profile_name);
+
+    rpc_server_ = new RpcServer(rpc_profile_name_);
+
+    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
+    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
+}
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, MAPTIMER timer_callback, const std::string &keeper_ip, const std::string &keeper_port)
@@ -93,7 +135,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, cons
         SetDefaultPartitioner();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
 
     rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
     rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
@@ -109,6 +151,70 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
     delete record_reader_;
     delete output_format_;
     delete partitioner_;
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name)
+{
+    if (profile_name == "") {
+        throw std::exception();
+    }
+
+    YAML::Node config = YAML::LoadFile(profile_name);
+    ip_ = config["ip"].as<std::string>();
+    port_ = config["port"].as<std::string>();
+    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
+    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
+    // reducer_num_ = config["reducer_num"].as<size_t>();
+    // split_size_ = config["split_size"].as<size_t>();
+    thread_num_ = config["thread_num"].as<size_t>();
+    log_name_ = config["log_name"].as<std::string>();
+    log_path_ = config["log_path"].as<std::string>();
+    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
+    async_log_ = config["async_log"].as<bool>();
+    singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
+    log_title_ = config["log_title"].as<std::string>();
+    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
+
+    if (singleton_log_mode_) {
+        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+    } else {
+        logger_ = new Imagine_Tool::NonSingletonLogger();
+        Imagine_Tool::Logger::SetInstance(logger_);
+    }
+
+    logger_->Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::InitProfilePath(std::string profile_name)
+{
+    size_t idx = profile_name.find_last_of("/");
+    profile_path_ = profile_name.substr(0, idx + 1);
+    rpc_profile_name_ = profile_path_ + "generate_Mapper_submodule_RPC_profile.yaml";
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::GenerateSubmoduleProfile(YAML::Node config)
+{
+    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    config["log_name"] = "imagine_rpc_log.log";
+    config["max_channel_num"] = 10000;
+    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
+    close(fd);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::SetDefault()
+{
+    SetDefaultMapFunction();
+    SetDefaultOutputFormat();
+    SetDefaultTimerCallback();
+    SetDefaultPartitioner();
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>

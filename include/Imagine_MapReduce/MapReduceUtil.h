@@ -3,7 +3,7 @@
 
 #include "Imagine_Rpc/Rpc.h"
 #include "InputSplit.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 
 #include <functional>
 #include <unordered_map>

@@ -2,7 +2,7 @@
 #define IMAGINE_MAPREDUCE_KVBUFFER_H
 
 #include "MapReduceUtil.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 
 #include <fcntl.h>
 

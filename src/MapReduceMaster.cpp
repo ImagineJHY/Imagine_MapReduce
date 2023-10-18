@@ -5,8 +5,32 @@
 namespace Imagine_MapReduce
 {
 
-MapReduceMaster::MapReduceMaster(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, const int reducer_num)
-                                 : ip_(ip), port_(port), keepr_ip_(keeper_ip), keeper_port_(keeper_port), reducer_num_(reducer_num)
+MapReduceMaster::MapReduceMaster()
+{
+    rpc_server_thread_ = new pthread_t;
+    if (!rpc_server_thread_) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer();
+}
+
+MapReduceMaster::MapReduceMaster(std::string profile_name)
+{
+    Init(profile_name);
+
+    rpc_server_thread_ = new pthread_t;
+    if (!rpc_server_thread_) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer(rpc_profile_name_);
+
+    rpc_server_->Callee("MapReduceCenter", std::bind(&MapReduceMaster::MapReduceCenter, this, std::placeholders::_1));
+}
+
+MapReduceMaster::MapReduceMaster(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, const size_t reducer_num)
+                                 : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), reducer_num_(reducer_num)
 {
     int temp_port = MapReduceUtil::StringToInt(port_);
     if (temp_port < 0) {
@@ -20,7 +44,7 @@ MapReduceMaster::MapReduceMaster(const std::string &ip, const std::string &port,
 
     // files.push_back("bbb.txt");
 
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, keepr_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
 
     rpc_server_->Callee("MapReduceCenter", std::bind(&MapReduceMaster::MapReduceCenter, this, std::placeholders::_1));
 }
@@ -31,7 +55,68 @@ MapReduceMaster::~MapReduceMaster()
     delete rpc_server_;
 }
 
-bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const int reducer_num, const int split_size)
+void MapReduceMaster::Init(std::string profile_name)
+{
+    if (profile_name == "") {
+        throw std::exception();
+    }
+
+    YAML::Node config = YAML::LoadFile(profile_name);
+    ip_ = config["ip"].as<std::string>();
+    port_ = config["port"].as<std::string>();
+    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
+    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
+    reducer_num_ = config["reducer_num"].as<size_t>();
+    split_size_ = config["split_size"].as<size_t>();
+
+    YAML::Node file_list = config["file_list"];
+    for(int i = 0; i < file_list.size(); i++) {
+        file_list_.push_back(file_list[i].as<std::string>());
+    }
+
+    thread_num_ = config["thread_num"].as<size_t>();
+    log_name_ = config["log_name"].as<std::string>();
+    log_path_ = config["log_path"].as<std::string>();
+    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
+    async_log_ = config["async_log"].as<bool>();
+    singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
+    log_title_ = config["log_title"].as<std::string>();
+    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
+
+    if (singleton_log_mode_) {
+        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+    } else {
+        logger_ = new Imagine_Tool::NonSingletonLogger();
+        Imagine_Tool::Logger::SetInstance(logger_);
+    }
+
+    logger_->Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+void MapReduceMaster::InitProfilePath(std::string profile_name)
+{
+    size_t idx = profile_name.find_last_of("/");
+    profile_path_ = profile_name.substr(0, idx + 1);
+    rpc_profile_name_ = profile_path_ + "generate_Master_submodule_RPC_profile.yaml";
+}
+
+void MapReduceMaster::GenerateSubmoduleProfile(YAML::Node config)
+{
+    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    config.remove(config["reducer_num"]);
+    config.remove(config["split_size"]);
+    config.remove(config["file_list"]);
+    config["log_name"] = "imagine_rpc_log.log";
+    config["max_channel_num"] = 10000;
+    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
+    close(fd);
+}
+
+bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num, const size_t split_size)
 {
     std::string method = "Map";
     std::vector<std::string> parameters;
@@ -50,7 +135,7 @@ bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const
         reducer_map_.insert(std::make_pair(i, reducer_node));
     }
 
-    Imagine_Rpc::RpcClient::Caller(method, parameters, keepr_ip_, keeper_port_);
+    Imagine_Rpc::RpcClient::Caller(method, parameters, zookeeper_ip_, zookeeper_port_);
 
     return true;
 }
@@ -198,7 +283,7 @@ std::string MapReduceMaster::ProcessMapperMessage(const std::vector<std::string>
                 if (!(it->second->is_ready_.load())) {
                     // 再次确认
                     LOG_INFO("Searching Reducer!");
-                    Imagine_Rpc::RpcClient::CallerOne("Reduce", keepr_ip_, keeper_port_, it->second->ip_, it->second->port_); // 获取一个reducer
+                    Imagine_Rpc::RpcClient::CallerOne("Reduce", zookeeper_ip_, zookeeper_port_, it->second->ip_, it->second->port_); // 获取一个reducer
                     LOG_INFO("GET REDUCER IP:%s, PORT:%s", &(it->second->ip_[0]), &(it->second->port_[0]));
                     StartReducer(it->second->ip_, it->second->port_);                                           // 启动reducer与master的连接
                     it->second->is_ready_.store(true);

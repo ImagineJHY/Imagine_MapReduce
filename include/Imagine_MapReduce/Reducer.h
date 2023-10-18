@@ -4,7 +4,7 @@
 #include "Imagine_Rpc/RpcServer.h"
 #include "Imagine_Rpc/RpcClient.h"
 #include "MapReduceUtil.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 
 #include <fcntl.h>
 #include <atomic>
@@ -115,9 +115,21 @@ class Reducer
     };
 
  public:
+    Reducer();
+
+    Reducer(std::string profile_name);
+
     Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip = "", const std::string &keeper_port = "", ReduceCallback reduce = nullptr);
 
     ~Reducer();
+
+    void Init(std::string profile_name);
+
+    void InitProfilePath(std::string profile_name);
+
+    void GenerateSubmoduleProfile(YAML::Node config);
+
+    void SetDefault();
 
     void loop();
 
@@ -132,20 +144,53 @@ class Reducer
     bool SetDefaultReduceFunction();
 
  private:
-    const std::string ip_;
-    const std::string port_;
+    std::string ip_;
+    std::string port_;
+    std::string zookeeper_ip_;
+    std::string zookeeper_port_;
+    size_t thread_num_;
+    std::string log_name_;
+    std::string log_path_;
+    size_t max_log_file_size_;
+    bool async_log_;
+    bool singleton_log_mode_;
+    std::string log_title_;
+    bool log_with_timestamp_;
 
-    const std::string keeper_ip_;
-    const std::string keeper_port_;
+    std::string profile_path_;
+    std::string rpc_profile_name_;
+
+ private:
 
     ReduceCallback reduce_;
 
     RpcServer *rpc_server_;
+    Imagine_Tool::Logger* logger_;
 
     pthread_mutex_t *map_lock_;
 
     std::unordered_map<std::pair<std::string, std::string>, MasterNode *, HashPair, EqualPair> master_map_;
 };
+
+template <typename key, typename value>
+Reducer<key, value>::Reducer()
+{
+}
+
+template <typename key, typename value>
+Reducer<key, value>::Reducer(std::string profile_name)
+{
+    Init(profile_name);
+
+    map_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(map_lock_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
+    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
+}
 
 template <typename key, typename value>
 Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, ReduceCallback reduce)
@@ -170,6 +215,65 @@ Reducer<key, value>::~Reducer()
 {
     delete rpc_server_;
     delete map_lock_;
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::Init(std::string profile_name)
+{
+    if (profile_name == "") {
+        throw std::exception();
+    }
+
+    YAML::Node config = YAML::LoadFile(profile_name);
+    ip_ = config["ip"].as<std::string>();
+    port_ = config["port"].as<std::string>();
+    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
+    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
+    thread_num_ = config["thread_num"].as<size_t>();
+    log_name_ = config["log_name"].as<std::string>();
+    log_path_ = config["log_path"].as<std::string>();
+    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
+    async_log_ = config["async_log"].as<bool>();
+    singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
+    log_title_ = config["log_title"].as<std::string>();
+    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
+
+    if (singleton_log_mode_) {
+        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+    } else {
+        logger_ = new Imagine_Tool::NonSingletonLogger();
+        Imagine_Tool::Logger::SetInstance(logger_);
+    }
+
+    logger_->Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::InitProfilePath(std::string profile_name)
+{
+    size_t idx = profile_name.find_last_of("/");
+    profile_path_ = profile_name.substr(0, idx + 1);
+    rpc_profile_name_ = profile_path_ + "generate_Reducer_submodule_RPC_profile.yaml";
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::GenerateSubmoduleProfile(YAML::Node config)
+{
+    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    config["log_name"] = "imagine_rpc_log.log";
+    config["max_channel_num"] = 10000;
+    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
+    close(fd);
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::SetDefault()
+{
+    SetDefaultReduceFunction();
 }
 
 template <typename key, typename value>

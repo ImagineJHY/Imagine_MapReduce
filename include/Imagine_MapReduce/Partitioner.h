@@ -1,7 +1,7 @@
 #ifndef IMAGINE_MAPREDUCE_PARTITIONER_H
 #define IMAGINE_MAPREDUCE_PARTITIONER_H
 
-#include "Callbacks.h"
+#include "common_definition.h"
 
 namespace Imagine_MapReduce
 {
