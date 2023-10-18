@@ -270,7 +270,7 @@ class MapRunner
     MAP map_;
     MAPTIMER timer_callback_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
 
     // 缓冲区
     KVBuffer *buffer_;

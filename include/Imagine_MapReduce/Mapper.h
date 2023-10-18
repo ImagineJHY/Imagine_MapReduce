@@ -112,7 +112,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name)
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, MAPTIMER timer_callback, const std::string &keeper_ip, const std::string &keeper_port)
-                                            : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
+                                            : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
 {
     rpc_server_thread_ = new pthread_t;
     if (!rpc_server_thread_) {
