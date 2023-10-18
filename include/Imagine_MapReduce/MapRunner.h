@@ -48,7 +48,7 @@ class MapRunner
     //     Init();
     // }
 
-    MapRunner(int split_id, int split_num, const std::string file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &master_ip, const std::string &master_port, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, RpcServer *rpc_server, int partition_num = DEFAULT_PARTITION_NUM)
+    MapRunner(int split_id, int split_num, const std::string file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &master_ip, const std::string &master_port, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, Imagine_Rpc::RpcServer *rpc_server, int partition_num = DEFAULT_PARTITION_NUM)
         : split_id_(split_id), split_num_(split_num), partition_num_(partition_num), file_name_(file_name), master_ip_(master_ip), master_port_(master_port), mapper_ip_(mapper_ip), mapper_port_(mapper_port), output_format_(output_format), partitioner_(partitioner), map_(map), rpc_server_(rpc_server)
     {
         buffer_ = new KVBuffer(partition_num_, split_id_, spill_files_);
@@ -95,7 +95,7 @@ class MapRunner
         return true;
     }
 
-    bool SetRpcServer(RpcServer *rpc_server)
+    bool SetRpcServer(Imagine_Rpc::RpcServer *rpc_server)
     {
         rpc_server_ = rpc_server;
         return true;
@@ -119,7 +119,7 @@ class MapRunner
 
     MAPTIMER GetTimerCallback() { return timer_callback_; }
 
-    RpcServer *GetRpcServer() { return rpc_server_; }
+    Imagine_Rpc::RpcServer *GetRpcServer() { return rpc_server_; }
 
     OutputFormat<key, value> *GetOutPutFormat() { return output_format_; }
 

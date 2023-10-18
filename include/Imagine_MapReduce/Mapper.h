@@ -87,7 +87,7 @@ class Mapper
 
     pthread_t *map_threads_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
     pthread_t *rpc_server_thread_;
     Imagine_Tool::Logger* logger_;
 
@@ -104,7 +104,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name)
 {
     Init(profile_name);
 
-    rpc_server_ = new RpcServer(rpc_profile_name_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(rpc_profile_name_);
 
     rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
     rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
@@ -135,7 +135,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, cons
         SetDefaultPartitioner();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
 
     rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
     rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
@@ -254,13 +254,13 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
                 // 连接Master
                 int sockfd;
                 long long timerfd;
-                if (RpcClient::ConnectServer(runner->GetMasterIp(), runner->GetMasterPort(), &sockfd)) {
+                if (Imagine_Rpc::RpcClient::ConnectServer(runner->GetMasterIp(), runner->GetMasterPort(), &sockfd)) {
                     std::vector<std::string> parameters;
                     parameters.push_back("Mapper");
                     parameters.push_back(runner->GetFileName());
                     parameters.push_back(MapReduceUtil::IntToString(runner->GetId()));
                     parameters.push_back("Start");
-                    if (RpcClient::Call("MapReduceCenter", parameters, &sockfd)[0] == "Receive") {
+                    if (Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd)[0] == "Receive") {
                         timerfd = runner->GetRpcServer()->SetTimer(2.0, 0.0, std::bind(runner->GetTimerCallback(), sockfd, reader));
                     } else {
                         throw std::exception();
@@ -287,7 +287,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
                 std::vector<std::string> &shuffle = runner->GetShuffleFile();
                 parameters.insert(parameters.end(), shuffle.begin(), shuffle.end());
                 // printf("%s : working is finish!\n",&split_file_name[0]);
-                RpcClient::Call("MapReduceCenter", parameters, &sockfd);
+                Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd);
 
                 delete runner;
 
@@ -300,7 +300,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
         pthread_detach(*(map_threads_ + i));
     }
 
-    return Rpc::Deserialize("");
+    return Imagine_Rpc::Rpc::Deserialize("");
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -366,7 +366,7 @@ bool Mapper<reader_key, reader_value, key, value>::SetDefaultTimerCallback()
     //     parameters.push_back("Process");
     //     parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
 
-    //     std::vector<std::string> recv_=RpcClient::Call(method,parameters,&sockfd);
+    //     std::vector<std::string> recv_=Imagine_Rpc::RpcClient::Call(method,parameters,&sockfd);
     //     if(recv_.size()&&recv_[0]=="Receive"){
     //         printf("connect ok!\n");
     //     }else{
@@ -397,7 +397,7 @@ void Mapper<reader_key, reader_value, key, value>::loop()
     pthread_create(
         rpc_server_thread_, nullptr, [](void *argv) -> void *
         {
-            RpcServer* rpc_server = (RpcServer*)argv;
+            Imagine_Rpc::RpcServer* rpc_server = (Imagine_Rpc::RpcServer*)argv;
             rpc_server->loop();
 
             return nullptr;
@@ -423,7 +423,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sock
     parameters.push_back("Process");
     parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
 
-    std::vector<std::string> temp_recv = RpcClient::Call(method, parameters, &sockfd);
+    std::vector<std::string> temp_recv = Imagine_Rpc::RpcClient::Call(method, parameters, &sockfd);
     if (temp_recv.size() && temp_recv[0] == "Receive") {
         // printf("connect ok!\n");
     } else {

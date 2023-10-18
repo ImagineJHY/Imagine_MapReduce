@@ -7,6 +7,7 @@ thirdparty_dir_path = 'thirdparty/'
 os.makedirs(os.path.dirname(thirdparty_dir_path), exist_ok = True)
 
 system_dir_path = os.path.join(thirdparty_dir_path, 'Imagine_System')
+tool_dir_path = os.path.join(thirdparty_dir_path, 'Imagine_Tool')
 
 # 判断Imagine System目录是否存在
 if os.path.isdir(system_dir_path):
@@ -16,5 +17,16 @@ else:
     #Imagine System不存在创建
     print("[MAKE INIT]: Imagine_System NOT exists, starting create...")
     submodule_command = ["git", "submodule", "add", "-f", "https://github.com/ImagineJHY/Imagine_System.git"]
+    process = subprocess.Popen(submodule_command, cwd = thirdparty_dir_path)
+    process.wait()
+
+# 判断Imagine Tool目录是否存在
+if os.path.isdir(tool_dir_path):
+    # Imagine Tool存在直接退出
+    print("[MAKE INIT]: Imagine_Tool exists.")
+else:
+    #Imagine System不存在创建
+    print("[MAKE INIT]: Imagine_Tool NOT exists, starting create...")
+    submodule_command = ["git", "submodule", "add", "-f", "https://github.com/ImagineJHY/Imagine_Tool.git"]
     process = subprocess.Popen(submodule_command, cwd = thirdparty_dir_path)
     process.wait()

@@ -164,7 +164,7 @@ class Reducer
 
     ReduceCallback reduce_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
     Imagine_Tool::Logger* logger_;
 
     pthread_mutex_t *map_lock_;
@@ -187,7 +187,7 @@ Reducer<key, value>::Reducer(std::string profile_name)
         throw std::exception();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, keeper_ip_, keeper_port_);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
@@ -205,7 +205,7 @@ Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, con
         throw std::exception();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, keeper_ip_, keeper_port_);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
@@ -380,7 +380,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     parameters.push_back(split_name);
 
     pthread_mutex_lock(master_node->memory_list_lock_);
-    master_node->memory_file_list_.push_front(RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
+    master_node->memory_file_list_.push_front(Imagine_Rpc::RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
     if ((*master_node->memory_file_list_.begin()).size()) {
         LOG_INFO("split file %s content : %s", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
     } else {
