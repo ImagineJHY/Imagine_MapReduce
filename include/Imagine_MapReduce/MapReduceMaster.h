@@ -48,11 +48,17 @@ class MapReduceMaster
 
     MapReduceMaster(std::string profile_name);
 
+    MapReduceMaster(YAML::Node config);
+
     MapReduceMaster(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, const size_t reducer_num = DEFAULT_REDUCER_NUM);
 
     ~MapReduceMaster();
 
     void Init(std::string profile_name);
+
+    void Init(YAML::Node config);
+
+    void InitLoop(YAML::Node config);
 
     void InitProfilePath(std::string profile_name);
 

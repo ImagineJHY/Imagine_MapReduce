@@ -120,11 +120,17 @@ class Reducer
 
     Reducer(std::string profile_name);
 
+    Reducer(YAML::Node config);
+
     Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip = "", const std::string &keeper_port = "", ReduceCallback reduce = nullptr);
 
     ~Reducer();
 
     void Init(std::string profile_name);
+
+    void Init(YAML::Node config);
+
+    void InitLoop(YAML::Node config);
 
     void InitProfilePath(std::string profile_name);
 
@@ -182,15 +188,12 @@ template <typename key, typename value>
 Reducer<key, value>::Reducer(std::string profile_name)
 {
     Init(profile_name);
+}
 
-    map_lock_ = new pthread_mutex_t;
-    if (pthread_mutex_init(map_lock_, nullptr) != 0) {
-        throw std::exception();
-    }
-
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
-    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
-    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
+template <typename key, typename value>
+Reducer<key, value>::Reducer(YAML::Node config)
+{
+    Init(config);
 }
 
 template <typename key, typename value>
@@ -226,6 +229,16 @@ void Reducer<key, value>::Init(std::string profile_name)
     }
 
     YAML::Node config = YAML::LoadFile(profile_name);
+    Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::Init(YAML::Node config)
+{
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
     zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
@@ -248,9 +261,20 @@ void Reducer<key, value>::Init(std::string profile_name)
 
     logger_->Init(config);
 
-    InitProfilePath(profile_name);
+    InitLoop(config);
+}
 
-    GenerateSubmoduleProfile(config);
+template <typename key, typename value>
+void Reducer<key, value>::InitLoop(YAML::Node config)
+{
+    map_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(map_lock_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
+    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
+    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
 
 template <typename key, typename value>

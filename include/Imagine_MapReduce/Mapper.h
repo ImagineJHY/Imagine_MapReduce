@@ -27,11 +27,17 @@ class Mapper
 
     Mapper(std::string profile_name);
 
+    Mapper(YAML::Node config);
+
     Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader = nullptr, MAP map = nullptr, Partitioner<key> *partitioner = nullptr, OutputFormat<key, value> *output_format = nullptr, MAPTIMER timer_callback = nullptr, const std::string &keeper_ip = "", const std::string &keeper_port = "");
 
     ~Mapper();
 
     void Init(std::string profile_name);
+
+    void Init(YAML::Node config);
+
+    void InitLoop(YAML::Node config);
 
     void InitProfilePath(std::string profile_name);
 
@@ -104,11 +110,12 @@ template <typename reader_key, typename reader_value, typename key, typename val
 Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name)
 {
     Init(profile_name);
+}
 
-    rpc_server_ = new Imagine_Rpc::RpcServer(rpc_profile_name_);
-
-    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
-    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config)
+{
+    Init(config);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -162,6 +169,16 @@ void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name
     }
 
     YAML::Node config = YAML::LoadFile(profile_name);
+    Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
+{
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
     zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
@@ -185,11 +202,17 @@ void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name
     }
 
     logger_->Init(config);
-
-    InitProfilePath(profile_name);
-
-    GenerateSubmoduleProfile(config);
 }
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
+{
+    rpc_server_ = new Imagine_Rpc::RpcServer(config);
+
+    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
+    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
+}
+
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 void Mapper<reader_key, reader_value, key, value>::InitProfilePath(std::string profile_name)

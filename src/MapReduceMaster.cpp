@@ -20,15 +20,11 @@ MapReduceMaster::MapReduceMaster()
 MapReduceMaster::MapReduceMaster(std::string profile_name)
 {
     Init(profile_name);
+}
 
-    rpc_server_thread_ = new pthread_t;
-    if (!rpc_server_thread_) {
-        throw std::exception();
-    }
-
-    rpc_server_ = new Imagine_Rpc::RpcServer(rpc_profile_name_);
-
-    rpc_server_->Callee("MapReduceCenter", std::bind(&MapReduceMaster::MapReduceCenter, this, std::placeholders::_1));
+MapReduceMaster::MapReduceMaster(YAML::Node config)
+{
+    Init(config);
 }
 
 MapReduceMaster::MapReduceMaster(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, const size_t reducer_num)
@@ -64,6 +60,15 @@ void MapReduceMaster::Init(std::string profile_name)
     }
 
     YAML::Node config = YAML::LoadFile(profile_name);
+    Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+void MapReduceMaster::Init(YAML::Node config)
+{
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
     zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
@@ -94,9 +99,19 @@ void MapReduceMaster::Init(std::string profile_name)
 
     logger_->Init(config);
 
-    InitProfilePath(profile_name);
+    InitLoop(config);
+}
 
-    GenerateSubmoduleProfile(config);
+void MapReduceMaster::InitLoop(YAML::Node config)
+{
+    rpc_server_thread_ = new pthread_t;
+    if (!rpc_server_thread_) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer(config);
+
+    rpc_server_->Callee("MapReduceCenter", std::bind(&MapReduceMaster::MapReduceCenter, this, std::placeholders::_1));
 }
 
 void MapReduceMaster::InitProfilePath(std::string profile_name)
