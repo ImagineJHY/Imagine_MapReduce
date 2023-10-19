@@ -8,6 +8,7 @@
 
 #include <fcntl.h>
 #include <atomic>
+#include <fstream>
 
 namespace Imagine_MapReduce
 {
@@ -263,11 +264,11 @@ void Reducer<key, value>::InitProfilePath(std::string profile_name)
 template <typename key, typename value>
 void Reducer<key, value>::GenerateSubmoduleProfile(YAML::Node config)
 {
-    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    std::ofstream fout(rpc_profile_name_.c_str());
     config["log_name"] = "imagine_rpc_log.log";
     config["max_channel_num"] = 10000;
-    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
-    close(fd);
+    fout << config;
+    fout.close();
 }
 
 template <typename key, typename value>

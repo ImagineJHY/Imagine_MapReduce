@@ -14,6 +14,7 @@
 #include "StringPartitioner.h"
 
 #include <memory.h>
+#include <fstream>
 
 namespace Imagine_MapReduce
 {
@@ -201,11 +202,11 @@ void Mapper<reader_key, reader_value, key, value>::InitProfilePath(std::string p
 template <typename reader_key, typename reader_value, typename key, typename value>
 void Mapper<reader_key, reader_value, key, value>::GenerateSubmoduleProfile(YAML::Node config)
 {
-    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    std::ofstream fout(rpc_profile_name_.c_str());
     config["log_name"] = "imagine_rpc_log.log";
     config["max_channel_num"] = 10000;
-    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
-    close(fd);
+    fout << config;
+    fout.close();
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>

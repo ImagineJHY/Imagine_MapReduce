@@ -2,6 +2,8 @@
 #include "Imagine_MapReduce/MapReduceMaster.h"
 #include "Imagine_MapReduce/MapReduceUtil.h"
 
+#include <fstream>
+
 namespace Imagine_MapReduce
 {
 
@@ -106,14 +108,14 @@ void MapReduceMaster::InitProfilePath(std::string profile_name)
 
 void MapReduceMaster::GenerateSubmoduleProfile(YAML::Node config)
 {
-    int fd = open(rpc_profile_name_.c_str(), O_RDWR | O_CREAT);
+    std::ofstream fout(rpc_profile_name_.c_str());
     config.remove(config["reducer_num"]);
     config.remove(config["split_size"]);
     config.remove(config["file_list"]);
     config["log_name"] = "imagine_rpc_log.log";
     config["max_channel_num"] = 10000;
-    write(fd, config.as<std::string>().c_str(), config.as<std::string>().size());
-    close(fd);
+    fout << config;
+    fout.close();
 }
 
 bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num, const size_t split_size)
