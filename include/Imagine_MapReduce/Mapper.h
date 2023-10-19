@@ -103,17 +103,18 @@ class Mapper
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 Mapper<reader_key, reader_value, key, value>::Mapper()
+                                            : record_reader_(nullptr), output_format_(nullptr), partitioner_(nullptr)
 {
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name)
+Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name) : Mapper()
 {
     Init(profile_name);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config)
+Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config) : Mapper()
 {
     Init(config);
 }
