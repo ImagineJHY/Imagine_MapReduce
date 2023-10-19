@@ -202,6 +202,8 @@ void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
     }
 
     logger_->Init(config);
+
+    InitLoop(config);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>

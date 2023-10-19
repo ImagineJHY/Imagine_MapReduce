@@ -272,7 +272,7 @@ void Reducer<key, value>::InitLoop(YAML::Node config)
         throw std::exception();
     }
 
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(config);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
