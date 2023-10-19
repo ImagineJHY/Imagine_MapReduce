@@ -209,6 +209,27 @@ void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
 template <typename reader_key, typename reader_value, typename key, typename value>
 void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
 {
+    rpc_server_thread_ = new pthread_t;
+    if (!rpc_server_thread_) {
+        throw std::exception();
+    }
+
+    if (record_reader_ == nullptr) {
+        record_reader_ = new LineRecordReader();
+    }
+    if (map_ == nullptr) {
+        SetDefaultMapFunction();
+    }
+    if (output_format_ == nullptr) {
+        SetDefaultOutputFormat();
+    }
+    if (timer_callback_ == nullptr) {
+        SetDefaultTimerCallback();
+    }
+    if (partitioner_ == nullptr) {
+        SetDefaultPartitioner();
+    }
+
     rpc_server_ = new Imagine_Rpc::RpcServer(config);
 
     rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
