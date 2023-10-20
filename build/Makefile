@@ -124,123 +124,6 @@ imagine_mapreduce/fast:
 .PHONY : imagine_mapreduce/fast
 
 #=============================================================================
-# Target rules for targets named build
-
-# Build rule for target.
-build: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 build
-.PHONY : build
-
-# fast build rule for target.
-build/fast:
-	$(MAKE) -f CMakeFiles/build.dir/build.make CMakeFiles/build.dir/build
-.PHONY : build/fast
-
-#=============================================================================
-# Target rules for targets named init
-
-# Build rule for target.
-init: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 init
-.PHONY : init
-
-# fast build rule for target.
-init/fast:
-	$(MAKE) -f CMakeFiles/init.dir/build.make CMakeFiles/init.dir/build
-.PHONY : init/fast
-
-#=============================================================================
-# Target rules for targets named prepare
-
-# Build rule for target.
-prepare: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 prepare
-.PHONY : prepare
-
-# fast build rule for target.
-prepare/fast:
-	$(MAKE) -f CMakeFiles/prepare.dir/build.make CMakeFiles/prepare.dir/build
-.PHONY : prepare/fast
-
-#=============================================================================
-# Target rules for targets named prepare_submodule
-
-# Build rule for target.
-prepare_submodule: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 prepare_submodule
-.PHONY : prepare_submodule
-
-# fast build rule for target.
-prepare_submodule/fast:
-	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build.make thirdparty/Imagine_System/CMakeFiles/prepare_submodule.dir/build
-.PHONY : prepare_submodule/fast
-
-#=============================================================================
-# Target rules for targets named system_prepare
-
-# Build rule for target.
-system_prepare: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 system_prepare
-.PHONY : system_prepare
-
-# fast build rule for target.
-system_prepare/fast:
-	$(MAKE) -f thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build.make thirdparty/Imagine_System/CMakeFiles/system_prepare.dir/build
-.PHONY : system_prepare/fast
-
-#=============================================================================
-# Target rules for targets named imagine_muduo
-
-# Build rule for target.
-imagine_muduo: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 imagine_muduo
-.PHONY : imagine_muduo
-
-# fast build rule for target.
-imagine_muduo/fast:
-	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build.make thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build
-.PHONY : imagine_muduo/fast
-
-#=============================================================================
-# Target rules for targets named imagine_zookeeper
-
-# Build rule for target.
-imagine_zookeeper: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 imagine_zookeeper
-.PHONY : imagine_zookeeper
-
-# fast build rule for target.
-imagine_zookeeper/fast:
-	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build.make thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build
-.PHONY : imagine_zookeeper/fast
-
-#=============================================================================
-# Target rules for targets named imagine_rpc
-
-# Build rule for target.
-imagine_rpc: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 imagine_rpc
-.PHONY : imagine_rpc
-
-# fast build rule for target.
-imagine_rpc/fast:
-	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build.make thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build
-.PHONY : imagine_rpc/fast
-
-#=============================================================================
-# Target rules for targets named tool_prepare
-
-# Build rule for target.
-tool_prepare: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 tool_prepare
-.PHONY : tool_prepare
-
-# fast build rule for target.
-tool_prepare/fast:
-	$(MAKE) -f thirdparty/Imagine_Tool/CMakeFiles/tool_prepare.dir/build.make thirdparty/Imagine_Tool/CMakeFiles/tool_prepare.dir/build
-.PHONY : tool_prepare/fast
-
-#=============================================================================
 # Target rules for targets named imagine_tool
 
 # Build rule for target.
@@ -708,6 +591,45 @@ imagine_log/fast:
 	$(MAKE) -f thirdparty/Imagine_Tool/Imagine_Log/CMakeFiles/imagine_log.dir/build.make thirdparty/Imagine_Tool/Imagine_Log/CMakeFiles/imagine_log.dir/build
 .PHONY : imagine_log/fast
 
+#=============================================================================
+# Target rules for targets named imagine_muduo
+
+# Build rule for target.
+imagine_muduo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_muduo
+.PHONY : imagine_muduo
+
+# fast build rule for target.
+imagine_muduo/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build.make thirdparty/Imagine_System/worker/Imagine_Muduo/CMakeFiles/imagine_muduo.dir/build
+.PHONY : imagine_muduo/fast
+
+#=============================================================================
+# Target rules for targets named imagine_zookeeper
+
+# Build rule for target.
+imagine_zookeeper: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_zookeeper
+.PHONY : imagine_zookeeper
+
+# fast build rule for target.
+imagine_zookeeper/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build.make thirdparty/Imagine_System/worker/Imagine_ZooKeeper/CMakeFiles/imagine_zookeeper.dir/build
+.PHONY : imagine_zookeeper/fast
+
+#=============================================================================
+# Target rules for targets named imagine_rpc
+
+# Build rule for target.
+imagine_rpc: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 imagine_rpc
+.PHONY : imagine_rpc
+
+# fast build rule for target.
+imagine_rpc/fast:
+	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build.make thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build
+.PHONY : imagine_rpc/fast
+
 src/KVBuffer.o: src/KVBuffer.cpp.o
 
 .PHONY : src/KVBuffer.o
@@ -823,17 +745,8 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
-	@echo "... edit_cache"
 	@echo "... imagine_mapreduce"
-	@echo "... build"
-	@echo "... init"
-	@echo "... prepare"
-	@echo "... prepare_submodule"
-	@echo "... system_prepare"
-	@echo "... imagine_muduo"
-	@echo "... imagine_zookeeper"
-	@echo "... imagine_rpc"
-	@echo "... tool_prepare"
+	@echo "... edit_cache"
 	@echo "... imagine_tool"
 	@echo "... imagine_tool_thirdparty"
 	@echo "... ContinuousSubmit"
@@ -870,6 +783,9 @@ help:
 	@echo "... yaml-cpp-parse"
 	@echo "... imagine_time"
 	@echo "... imagine_log"
+	@echo "... imagine_muduo"
+	@echo "... imagine_zookeeper"
+	@echo "... imagine_rpc"
 	@echo "... src/KVBuffer.o"
 	@echo "... src/KVBuffer.i"
 	@echo "... src/KVBuffer.s"
