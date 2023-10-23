@@ -1,0 +1,15 @@
+ip: 192.168.83.130
+port: 9000
+zookeeper_ip: 192.168.83.130
+zookeeper_port: 9999
+reducer_num: 5
+split_size: 40
+file_list: testfile.txt
+thread_num: 5
+log_name: imagine_mapReduce_log.log
+log_path: /home/imagine/MIT6824/Imagine_MapReduce/log/
+max_log_file_size: 104857600
+async_log: false
+singleton_log_mode: false
+log_title: Imagine MapReduce
+log_with_timestamp: true

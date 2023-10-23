@@ -1,10 +1,10 @@
 #ifndef IMAGINE_MAPREDUCE_LINERECORDREADER_H
 #define IMAGINE_MAPREDUCE_LINERECORDREADER_H
 
+#include "RecordReader.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-
-#include "RecordReader.h"
 
 namespace Imagine_MapReduce
 {

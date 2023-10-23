@@ -1,17 +1,14 @@
 #ifndef IMAGINE_MAPREDUCE_UTIL_H
 #define IMAGINE_MAPREDUCE_UTIL_H
 
+#include "Imagine_Rpc/Rpc.h"
+#include "InputSplit.h"
+#include "common_definition.h"
+
 #include <functional>
 #include <unordered_map>
 #include <vector>
 #include <string.h>
-
-#include <Rpc.h>
-
-#include "InputSplit.h"
-#include "Callbacks.h"
-
-using namespace Imagine_Rpc;
 
 namespace Imagine_MapReduce
 {
@@ -38,7 +35,7 @@ class MapReduceUtil
     static std::string IntToString(int input);
     static std::string DoubleToString(double input);
 
-    static std::string GetIovec(const struct iovec *input_iovec) { return Rpc::GetIovec(input_iovec); }
+    static std::string GetIovec(const struct iovec *input_iovec) { return Imagine_Rpc::Rpc::GetIovec(input_iovec); }
 
     static bool ReadKVReaderFromMemory(const std::string &content, int &idx, std::string &key, std::string &value);
     static bool ReadKVReaderFromDisk(const int fd, std::string &key, std::string &value);

@@ -1,15 +1,14 @@
 #ifndef IMAGINE_MAPREDUCE_REDUCER_H
 #define IMAGINE_MAPREDUCE_REDUCER_H
 
+#include "Imagine_Rpc/RpcServer.h"
+#include "Imagine_Rpc/RpcClient.h"
+#include "MapReduceUtil.h"
+#include "common_definition.h"
+
 #include <fcntl.h>
 #include <atomic>
-// #include<list>
-
-#include <RpcServer.h>
-#include <RpcClient.h>
-
-#include "MapReduceUtil.h"
-#include "Callbacks.h"
+#include <fstream>
 
 namespace Imagine_MapReduce
 {
@@ -117,9 +116,27 @@ class Reducer
     };
 
  public:
+    Reducer();
+
+    Reducer(std::string profile_name);
+
+    Reducer(YAML::Node config);
+
     Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip = "", const std::string &keeper_port = "", ReduceCallback reduce = nullptr);
 
     ~Reducer();
+
+    void Init(std::string profile_name);
+
+    void Init(YAML::Node config);
+
+    void InitLoop(YAML::Node config);
+
+    void InitProfilePath(std::string profile_name);
+
+    void GenerateSubmoduleProfile(YAML::Node config);
+
+    void SetDefault();
 
     void loop();
 
@@ -134,15 +151,28 @@ class Reducer
     bool SetDefaultReduceFunction();
 
  private:
-    const std::string ip_;
-    const std::string port_;
+    std::string ip_;
+    std::string port_;
+    std::string zookeeper_ip_;
+    std::string zookeeper_port_;
+    size_t thread_num_;
+    std::string log_name_;
+    std::string log_path_;
+    size_t max_log_file_size_;
+    bool async_log_;
+    bool singleton_log_mode_;
+    std::string log_title_;
+    bool log_with_timestamp_;
 
-    const std::string keeper_ip_;
-    const std::string keeper_port_;
+    std::string profile_path_;
+    std::string rpc_profile_name_;
+
+ private:
 
     ReduceCallback reduce_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
+    Imagine_Tool::Logger* logger_;
 
     pthread_mutex_t *map_lock_;
 
@@ -150,8 +180,25 @@ class Reducer
 };
 
 template <typename key, typename value>
+Reducer<key, value>::Reducer()
+{
+}
+
+template <typename key, typename value>
+Reducer<key, value>::Reducer(std::string profile_name)
+{
+    Init(profile_name);
+}
+
+template <typename key, typename value>
+Reducer<key, value>::Reducer(YAML::Node config)
+{
+    Init(config);
+}
+
+template <typename key, typename value>
 Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, ReduceCallback reduce)
-                             : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), reduce_(reduce)
+                             : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), reduce_(reduce)
 {
     if (reduce_ == nullptr) {
         SetDefaultReduceFunction();
@@ -162,7 +209,7 @@ Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, con
         throw std::exception();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
     rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
     rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
 }
@@ -172,6 +219,86 @@ Reducer<key, value>::~Reducer()
 {
     delete rpc_server_;
     delete map_lock_;
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::Init(std::string profile_name)
+{
+    if (profile_name == "") {
+        throw std::exception();
+    }
+
+    YAML::Node config = YAML::LoadFile(profile_name);
+    Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::Init(YAML::Node config)
+{
+    ip_ = config["ip"].as<std::string>();
+    port_ = config["port"].as<std::string>();
+    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
+    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
+    thread_num_ = config["thread_num"].as<size_t>();
+    log_name_ = config["log_name"].as<std::string>();
+    log_path_ = config["log_path"].as<std::string>();
+    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
+    async_log_ = config["async_log"].as<bool>();
+    singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
+    log_title_ = config["log_title"].as<std::string>();
+    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
+
+    if (singleton_log_mode_) {
+        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+    } else {
+        logger_ = new Imagine_Tool::NonSingletonLogger();
+        Imagine_Tool::Logger::SetInstance(logger_);
+    }
+
+    logger_->Init(config);
+
+    InitLoop(config);
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::InitLoop(YAML::Node config)
+{
+    map_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(map_lock_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer(config);
+    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
+    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::InitProfilePath(std::string profile_name)
+{
+    size_t idx = profile_name.find_last_of("/");
+    profile_path_ = profile_name.substr(0, idx + 1);
+    rpc_profile_name_ = profile_path_ + "generate_Reducer_submodule_RPC_profile.yaml";
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::GenerateSubmoduleProfile(YAML::Node config)
+{
+    std::ofstream fout(rpc_profile_name_.c_str());
+    config["log_name"] = "imagine_rpc_log.log";
+    config["max_channel_num"] = 10000;
+    fout << config;
+    fout.close();
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::SetDefault()
+{
+    SetDefaultReduceFunction();
 }
 
 template <typename key, typename value>
@@ -190,7 +317,7 @@ std::vector<std::string> Reducer<key, value>::Register(const std::vector<std::st
         -3.master_ip
         -4.master_port
     */
-    printf("This is Register Method !\n");
+    LOG_INFO("This is Register Method !");
     // for(int i=0;i<input.size();i++)printf("%s\n",&input[i][0]);
     int new_master_file_num = MapReduceUtil::StringToInt(input[0]);
     std::pair<std::string, std::string> new_master_pair = std::make_pair(input[new_master_file_num + 1], input[new_master_file_num + 2]);
@@ -240,7 +367,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
         -6.master_ip:master的ip
         -7.master_port:master的port
     */
-    printf("this is Reduce Method !\n");
+    LOG_INFO("this is Reduce Method !");
     // for(int i=0;i<input.size();i++)printf("%s\n",&input[i][0]);
     int split_num = MapReduceUtil::StringToInt(input[0]);
     std::string file_name = input[1];
@@ -278,11 +405,11 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     parameters.push_back(split_name);
 
     pthread_mutex_lock(master_node->memory_list_lock_);
-    master_node->memory_file_list_.push_front(RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
+    master_node->memory_file_list_.push_front(Imagine_Rpc::RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
     if ((*master_node->memory_file_list_.begin()).size()) {
-        printf("split file %s content : \n%s\n", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
+        LOG_INFO("split file %s content : %s", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
     } else {
-        printf("split file %s content : NoContent!\n", &split_name[0]);
+        LOG_INFO("split file %s content : NoContent!", &split_name[0]);
     }
     master_node->memory_file_size_ += master_node->memory_file_list_.front().size();
     pthread_mutex_unlock(master_node->memory_list_lock_);
@@ -304,7 +431,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
         // 所有文件接收完毕,可以开始执行
         master_node->receive_all_.store(true);
         while (master_node->disk_merge_.load());
-        printf("TaskOver!\n");
+        LOG_INFO("TaskOver!");
     }
     pthread_mutex_unlock(map_lock_);
 

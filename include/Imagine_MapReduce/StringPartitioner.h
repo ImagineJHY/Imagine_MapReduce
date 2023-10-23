@@ -1,10 +1,10 @@
 #ifndef IMAGINE_MAPREDUCE_STRINGPARTITIONER_H
 #define IMAGINE_MAPREDUCE_STRINGPARTITIONER_H
 
+#include "Partitioner.h"
+
 #include <string>
 #include <unordered_set>
-
-#include "Partitioner.h"
 
 namespace Imagine_MapReduce
 {

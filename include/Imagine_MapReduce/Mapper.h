@@ -1,19 +1,20 @@
 #ifndef IMAGINE_MAPREDUCE_MAPPER_H
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
-#include <memory.h>
-
-#include "RpcServer.h"
+#include "Imagine_Rpc/RpcServer.h"
+#include "Imagine_Rpc/RpcClient.h"
 #include "MapReduceUtil.h"
 #include "RecordReader.h"
 #include "LineRecordReader.h"
 #include "MapRunner.h"
-#include "RpcClient.h"
 #include "OutputFormat.h"
 #include "TextOutputFormat.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 #include "Partitioner.h"
 #include "StringPartitioner.h"
+
+#include <memory.h>
+#include <fstream>
 
 namespace Imagine_MapReduce
 {
@@ -22,9 +23,27 @@ template <typename reader_key, typename reader_value, typename key, typename val
 class Mapper
 {
  public:
+    Mapper();
+
+    Mapper(std::string profile_name);
+
+    Mapper(YAML::Node config);
+
     Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader = nullptr, MAP map = nullptr, Partitioner<key> *partitioner = nullptr, OutputFormat<key, value> *output_format = nullptr, MAPTIMER timer_callback = nullptr, const std::string &keeper_ip = "", const std::string &keeper_port = "");
 
     ~Mapper();
+
+    void Init(std::string profile_name);
+
+    void Init(YAML::Node config);
+
+    void InitLoop(YAML::Node config);
+
+    void InitProfilePath(std::string profile_name);
+
+    void GenerateSubmoduleProfile(YAML::Node config);
+
+    void SetDefault();
 
     // Rpc通信调用
     std::vector<std::string> Map(const std::vector<std::string> &input);
@@ -45,13 +64,26 @@ class Mapper
 
     void loop();
 
+  private:
+    std::string ip_;
+    std::string port_;
+    std::string zookeeper_ip_;
+    std::string zookeeper_port_;
+    // size_t reducer_num_;
+    // size_t split_size_;
+    size_t thread_num_;
+    std::string log_name_;
+    std::string log_path_;
+    size_t max_log_file_size_;
+    bool async_log_;
+    bool singleton_log_mode_;
+    std::string log_title_;
+    bool log_with_timestamp_;
+
+    std::string profile_path_;
+    std::string rpc_profile_name_;
+
  private:
-    const std::string ip_;
-    const std::string port_;
-
-    const std::string keeper_ip_;
-    const std::string keeper_port_;
-
     MAP map_;                                                           // 提供给用户自定义的map函数
     MAPTIMER timer_callback_;
 
@@ -62,15 +94,34 @@ class Mapper
 
     pthread_t *map_threads_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
     pthread_t *rpc_server_thread_;
+    Imagine_Tool::Logger* logger_;
 
     Partitioner<key> *partitioner_;
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper()
+                                            : record_reader_(nullptr), output_format_(nullptr), partitioner_(nullptr)
+{
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name) : Mapper()
+{
+    Init(profile_name);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config) : Mapper()
+{
+    Init(config);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
 Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, MAPTIMER timer_callback, const std::string &keeper_ip, const std::string &keeper_port)
-                                            : ip_(ip), port_(port), keeper_ip_(keeper_ip), keeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
+                                            : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
 {
     rpc_server_thread_ = new pthread_t;
     if (!rpc_server_thread_) {
@@ -93,7 +144,7 @@ Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, cons
         SetDefaultPartitioner();
     }
 
-    rpc_server_ = new RpcServer(ip_, port_, keeper_ip_, keeper_port_);
+    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
 
     rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
     rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
@@ -109,6 +160,109 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
     delete record_reader_;
     delete output_format_;
     delete partitioner_;
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name)
+{
+    if (profile_name == "") {
+        throw std::exception();
+    }
+
+    YAML::Node config = YAML::LoadFile(profile_name);
+    Init(config);
+
+    InitProfilePath(profile_name);
+
+    GenerateSubmoduleProfile(config);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
+{
+    ip_ = config["ip"].as<std::string>();
+    port_ = config["port"].as<std::string>();
+    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
+    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
+    // reducer_num_ = config["reducer_num"].as<size_t>();
+    // split_size_ = config["split_size"].as<size_t>();
+    thread_num_ = config["thread_num"].as<size_t>();
+    log_name_ = config["log_name"].as<std::string>();
+    log_path_ = config["log_path"].as<std::string>();
+    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
+    async_log_ = config["async_log"].as<bool>();
+    singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
+    log_title_ = config["log_title"].as<std::string>();
+    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
+
+    if (singleton_log_mode_) {
+        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+    } else {
+        logger_ = new Imagine_Tool::NonSingletonLogger();
+        Imagine_Tool::Logger::SetInstance(logger_);
+    }
+
+    logger_->Init(config);
+
+    InitLoop(config);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
+{
+    rpc_server_thread_ = new pthread_t;
+    if (!rpc_server_thread_) {
+        throw std::exception();
+    }
+
+    if (record_reader_ == nullptr) {
+        record_reader_ = new LineRecordReader();
+    }
+    if (map_ == nullptr) {
+        SetDefaultMapFunction();
+    }
+    if (output_format_ == nullptr) {
+        SetDefaultOutputFormat();
+    }
+    if (timer_callback_ == nullptr) {
+        SetDefaultTimerCallback();
+    }
+    if (partitioner_ == nullptr) {
+        SetDefaultPartitioner();
+    }
+
+    rpc_server_ = new Imagine_Rpc::RpcServer(config);
+
+    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
+    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
+}
+
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::InitProfilePath(std::string profile_name)
+{
+    size_t idx = profile_name.find_last_of("/");
+    profile_path_ = profile_name.substr(0, idx + 1);
+    rpc_profile_name_ = profile_path_ + "generate_Mapper_submodule_RPC_profile.yaml";
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::GenerateSubmoduleProfile(YAML::Node config)
+{
+    std::ofstream fout(rpc_profile_name_.c_str());
+    config["log_name"] = "imagine_rpc_log.log";
+    config["max_channel_num"] = 10000;
+    fout << config;
+    fout.close();
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+void Mapper<reader_key, reader_value, key, value>::SetDefault()
+{
+    SetDefaultMapFunction();
+    SetDefaultOutputFormat();
+    SetDefaultTimerCallback();
+    SetDefaultPartitioner();
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -148,13 +302,13 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
                 // 连接Master
                 int sockfd;
                 long long timerfd;
-                if (RpcClient::ConnectServer(runner->GetMasterIp(), runner->GetMasterPort(), &sockfd)) {
+                if (Imagine_Rpc::RpcClient::ConnectServer(runner->GetMasterIp(), runner->GetMasterPort(), &sockfd)) {
                     std::vector<std::string> parameters;
                     parameters.push_back("Mapper");
                     parameters.push_back(runner->GetFileName());
                     parameters.push_back(MapReduceUtil::IntToString(runner->GetId()));
                     parameters.push_back("Start");
-                    if (RpcClient::Call("MapReduceCenter", parameters, &sockfd)[0] == "Receive") {
+                    if (Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd)[0] == "Receive") {
                         timerfd = runner->GetRpcServer()->SetTimer(2.0, 0.0, std::bind(runner->GetTimerCallback(), sockfd, reader));
                     } else {
                         throw std::exception();
@@ -181,7 +335,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
                 std::vector<std::string> &shuffle = runner->GetShuffleFile();
                 parameters.insert(parameters.end(), shuffle.begin(), shuffle.end());
                 // printf("%s : working is finish!\n",&split_file_name[0]);
-                RpcClient::Call("MapReduceCenter", parameters, &sockfd);
+                Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd);
 
                 delete runner;
 
@@ -194,7 +348,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const
         pthread_detach(*(map_threads_ + i));
     }
 
-    return Rpc::Deserialize("");
+    return Imagine_Rpc::Rpc::Deserialize("");
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -202,7 +356,7 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(c
 {
     std::vector<std::string> output;
     std::string content;
-    printf("get file %s\n", &input[0][0]);
+    LOG_INFO("get file %s", &input[0][0]);
     int fd = open(&input[0][0], O_RDWR);
     while (1) {
         char buffer[1024];
@@ -260,7 +414,7 @@ bool Mapper<reader_key, reader_value, key, value>::SetDefaultTimerCallback()
     //     parameters.push_back("Process");
     //     parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
 
-    //     std::vector<std::string> recv_=RpcClient::Call(method,parameters,&sockfd);
+    //     std::vector<std::string> recv_=Imagine_Rpc::RpcClient::Call(method,parameters,&sockfd);
     //     if(recv_.size()&&recv_[0]=="Receive"){
     //         printf("connect ok!\n");
     //     }else{
@@ -291,7 +445,7 @@ void Mapper<reader_key, reader_value, key, value>::loop()
     pthread_create(
         rpc_server_thread_, nullptr, [](void *argv) -> void *
         {
-            RpcServer* rpc_server = (RpcServer*)argv;
+            Imagine_Rpc::RpcServer* rpc_server = (Imagine_Rpc::RpcServer*)argv;
             rpc_server->loop();
 
             return nullptr;
@@ -305,7 +459,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sock
 {
     // printf("this is timer callback!\n");
     if (reader.use_count() == 1) {
-        printf("This Mapper Task Over!\n");
+        LOG_INFO("This Mapper Task Over!");
         return;
     }
     // printf("sockfd is %d\n",sockfd);
@@ -317,11 +471,11 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sock
     parameters.push_back("Process");
     parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
 
-    std::vector<std::string> temp_recv = RpcClient::Call(method, parameters, &sockfd);
+    std::vector<std::string> temp_recv = Imagine_Rpc::RpcClient::Call(method, parameters, &sockfd);
     if (temp_recv.size() && temp_recv[0] == "Receive") {
         // printf("connect ok!\n");
     } else {
-        printf("connect error!\n");
+        LOG_INFO("connect error!");
     }
 }
 

@@ -1,15 +1,15 @@
 #ifndef IMAGINE_MAPREDUCE_MAPRUNNER_H
 #define IMAGINE_MAPREDUCE_MAPRUNNER_H
 
-#include <string.h>
-#include <queue>
-
 #include "RecordReader.h"
 #include "Mapper.h"
 #include "OutputFormat.h"
 #include "KVBuffer.h"
-#include "Callbacks.h"
+#include "common_definition.h"
 #include "Partitioner.h"
+
+#include <string.h>
+#include <queue>
 
 namespace Imagine_MapReduce
 {
@@ -48,7 +48,7 @@ class MapRunner
     //     Init();
     // }
 
-    MapRunner(int split_id, int split_num, const std::string file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &master_ip, const std::string &master_port, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, RpcServer *rpc_server, int partition_num = DEFAULT_PARTITION_NUM)
+    MapRunner(int split_id, int split_num, const std::string file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &master_ip, const std::string &master_port, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, Imagine_Rpc::RpcServer *rpc_server, int partition_num = DEFAULT_PARTITION_NUM)
         : split_id_(split_id), split_num_(split_num), partition_num_(partition_num), file_name_(file_name), master_ip_(master_ip), master_port_(master_port), mapper_ip_(mapper_ip), mapper_port_(mapper_port), output_format_(output_format), partitioner_(partitioner), map_(map), rpc_server_(rpc_server)
     {
         buffer_ = new KVBuffer(partition_num_, split_id_, spill_files_);
@@ -95,7 +95,7 @@ class MapRunner
         return true;
     }
 
-    bool SetRpcServer(RpcServer *rpc_server)
+    bool SetRpcServer(Imagine_Rpc::RpcServer *rpc_server)
     {
         rpc_server_ = rpc_server;
         return true;
@@ -119,7 +119,7 @@ class MapRunner
 
     MAPTIMER GetTimerCallback() { return timer_callback_; }
 
-    RpcServer *GetRpcServer() { return rpc_server_; }
+    Imagine_Rpc::RpcServer *GetRpcServer() { return rpc_server_; }
 
     OutputFormat<key, value> *GetOutPutFormat() { return output_format_; }
 
@@ -170,7 +170,7 @@ class MapRunner
         -" "作为key和value的分隔符
         -"\r\n"作为每一对数据的分隔符
         */
-        printf("Start Combining!\n");
+        LOG_INFO("Start Combining!");
         const int spill_num = spill_files_[0].size();
         for (int i = 0; i < partition_num_; i++) {
             std::string shuffle_file = "split" + MapReduceUtil::IntToString(split_id_) + "_shuffle_" + MapReduceUtil::IntToString(i + 1) + ".txt";
@@ -270,7 +270,7 @@ class MapRunner
     MAP map_;
     MAPTIMER timer_callback_;
 
-    RpcServer *rpc_server_;
+    Imagine_Rpc::RpcServer *rpc_server_;
 
     // 缓冲区
     KVBuffer *buffer_;
