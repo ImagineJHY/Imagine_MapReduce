@@ -1,5 +1,12 @@
 #include "Imagine_MapReduce/MapReduceUtil.h"
 
+#include "Imagine_MapReduce/TaskCompleteMessage.pb.h"
+#include "Imagine_MapReduce/MapTaskMessage.pb.h"
+#include "Imagine_MapReduce/HeartBeatMessage.pb.h"
+#include "Imagine_MapReduce/ReduceTaskMessage.pb.h"
+#include "Imagine_MapReduce/StartReduceMessage.pb.h"
+#include "Imagine_MapReduce/RetrieveSplitFileMessage.pb.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <vector>
@@ -306,6 +313,81 @@ bool MapReduceUtil::MergeKVReaderFromDisk(const int *const fds, const int fd_num
     close(fd);
 
     return true;
+}
+
+void MapReduceUtil::GenerateMapTaskMessage(Internal::MapTaskRequestMessage* request_msg, const std::string& file_name, size_t split_size, const std::string& master_ip, const std::string& master_port)
+{
+    request_msg->set_send_identity_(Internal::Identity::Master);
+    request_msg->set_recv_identity_(Internal::Identity::Mapper);
+    request_msg->set_file_name_(file_name);
+    request_msg->set_split_size_(split_size);
+    request_msg->set_listen_ip_(master_ip);
+    request_msg->set_listen_port_(master_port);
+}
+
+void MapReduceUtil::GenerateReduceTaskMessage(Internal::ReduceTaskRequestMessage* request_msg, const std::string& file_name, const std::string& split_file_name, size_t split_num, const std::string& mapper_ip, const std::string& mapper_port, const std::string& master_ip, const std::string& master_port)
+{
+    request_msg->set_send_identity_(Internal::Identity::Master);
+    request_msg->set_recv_identity_(Internal::Identity::Reducer);
+    request_msg->set_file_name_(file_name);
+    request_msg->set_split_file_name_(split_file_name);
+    request_msg->set_split_num_(split_num);
+    request_msg->set_mapper_ip_(mapper_ip);
+    request_msg->set_mapper_port_(mapper_port);
+    request_msg->set_master_ip_(master_ip);
+    request_msg->set_master_port_(master_port);
+}
+
+void MapReduceUtil::GenerateHeartBeatStartMessage(Internal::HeartBeatRequestMessage* request_msg, Internal::Identity send_identity, const std::string& file_name, size_t split_id)
+{
+    request_msg->set_send_identity_(send_identity);
+    request_msg->set_recv_identity_(Internal::Identity::Master);
+    request_msg->set_file_name_(file_name);
+    request_msg->set_split_id_(split_id);
+    request_msg->set_task_status_(Internal::TaskStatus::Start);
+    request_msg->set_task_progress_(0.0);
+}
+
+void MapReduceUtil::GenerateHeartBeatProcessMessage(Internal::HeartBeatRequestMessage* request_msg, Internal::Identity send_identity, const std::string& file_name, size_t split_id, double process)
+{
+    request_msg->set_send_identity_(send_identity);
+    request_msg->set_recv_identity_(Internal::Identity::Master);
+    request_msg->set_file_name_(file_name);
+    request_msg->set_split_id_(split_id);
+    request_msg->set_task_status_(Internal::TaskStatus::Process);
+    request_msg->set_task_progress_(process);
+}
+
+void MapReduceUtil::GenerateTaskCompleteMessage(Internal::TaskCompleteRequestMessage* request_msg, Internal::Identity send_identity, const std::string& file_name, size_t split_id, size_t split_num, const std::string& listen_ip, const std::string& listen_port, std::vector<std::string> file_list)
+{
+    request_msg->set_send_identity_(send_identity);
+    request_msg->set_recv_identity_(Internal::Identity::Master);
+    request_msg->set_file_name_(file_name);
+    request_msg->set_split_id_(split_id);
+    request_msg->set_split_num_(split_num);
+    request_msg->set_listen_ip_(listen_ip);
+    request_msg->set_listen_port_(listen_port);
+    for (size_t i = 0; i < file_list.size(); i++) {
+        request_msg->add_file_list_(file_list[i]);
+    }
+}
+
+void MapReduceUtil::GenerateStartReduceMessage(Internal::StartReduceRequestMessage* request_msg, const std::string& master_ip, const std::string& master_port, std::vector<std::string>& file_list)
+{
+    request_msg->set_send_identity_(Internal::Identity::Master);
+    request_msg->set_recv_identity_(Internal::Identity::Reducer);
+    request_msg->set_listen_ip_(master_ip);
+    request_msg->set_listen_port_(master_port);
+    for (size_t i = 0; i < file_list.size(); i++) {
+        request_msg->add_file_list_(file_list[i]);
+    }
+}
+
+void MapReduceUtil::GenerateRetrieveSplitFileMessage(Internal::RetrieveSplitFileRequestMessage* request_msg, const std::string& split_file_name)
+{
+    request_msg->set_send_identity_(Internal::Identity::Reducer);
+    request_msg->set_recv_identity_(Internal::Identity::Mapper);
+    request_msg->set_split_file_name_(split_file_name);
 }
 
 } // namespace Imagine_MapReduce

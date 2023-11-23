@@ -1,6 +1,6 @@
 [submodule "thirdparty/Imagine_System"]
 	path = thirdparty/Imagine_System
-	url = git@github.com:ImagineJHY/Imagine_System.git
+	url = https://github.com/ImagineJHY/Imagine_System.git
 [submodule "thirdparty/Imagine_Tool"]
 	path = thirdparty/Imagine_Tool
 	url = https://github.com/ImagineJHY/Imagine_Tool.git

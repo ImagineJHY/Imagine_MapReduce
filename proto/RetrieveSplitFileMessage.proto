@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+import "InternalType.proto";
+
+// Mapper提供的Split文件获取函数 √
+
+message RetrieveSplitFileRequestMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    string split_file_name_ = 3;                // split文件名
+}
+
+message RetrieveSplitFileResponseMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    Status status_ = 3;                         // 任务接收状态
+    string split_file_content_ = 4;             // split文件内容
+}

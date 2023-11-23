@@ -3,6 +3,7 @@
 
 #include "Imagine_Muduo/EventLoop.h"
 #include "Imagine_Rpc/RpcServer.h"
+#include "Imagine_Rpc/Stub.h"
 #include "common_definition.h"
 
 #include <atomic>
@@ -28,10 +29,19 @@ class MapReduceMaster
     class ReducerNode
     {
      public:
-        ReducerNode() : ip_(""), port_(""), is_ready_(false)
+        ReducerNode() : ip_(""), port_(""), is_ready_(false), stub_(nullptr)
         {
             reducer_lock_ = new pthread_mutex_t;
             pthread_mutex_init(reducer_lock_, nullptr);
+        }
+
+        ReducerNode* SetStub(Imagine_Rpc::Stub* stub)
+        {
+            stub_ = stub;
+            ip_ = stub->GetServerIp();
+            port_ = stub->GetServerPort();
+
+            return this;
         }
 
      public:
@@ -41,6 +51,7 @@ class MapReduceMaster
 
         pthread_mutex_t *reducer_lock_;
         std::atomic<bool> is_ready_;
+        Imagine_Rpc::Stub* stub_;
     };
 
  public:
@@ -50,8 +61,6 @@ class MapReduceMaster
 
     MapReduceMaster(YAML::Node config);
 
-    MapReduceMaster(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, const size_t reducer_num = DEFAULT_REDUCER_NUM);
-
     ~MapReduceMaster();
 
     void Init(std::string profile_name);
@@ -59,10 +68,6 @@ class MapReduceMaster
     void Init(YAML::Node config);
 
     void InitLoop(YAML::Node config);
-
-    void InitProfilePath(std::string profile_name);
-
-    void GenerateSubmoduleProfile(YAML::Node config);
 
     // 目前只支持单文件处理,因为要区分不同文件则不同Mapper应该对应在不同文件的机器
     bool MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num = DEFAULT_REDUCER_NUM, const size_t split_size = DEFAULT_READ_SPLIT_SIZE);
@@ -72,17 +77,21 @@ class MapReduceMaster
 
     bool ConnMapper();
 
-    bool ConnReducer(const std::string &split_num, const std::string &file_name, const std::string &split_file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &reducer_ip, const std::string &reducer_port);
+    bool ConnReducer(size_t split_num, const std::string &file_name, const std::string &split_file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &reducer_ip, const std::string &reducer_port);
 
     std::vector<std::string> MapReduceCenter(const std::vector<std::string> &message);
-
-    std::string ProcessMapperMessage(const std::vector<std::string> &message);
 
     std::string ProcessReducerMessage(const std::vector<std::string> &message);
 
     void loop();
 
+    ReducerNode* FindReducerNode(int idx) const;
+
     bool SetTaskFile(std::vector<std::string> &files);
+
+    size_t GetReducerNum() const;
+
+    Imagine_Rpc::Stub* GenerateNewStub() const;
 
  private:
     std::string ip_;
@@ -113,6 +122,7 @@ class MapReduceMaster
     std::vector<std::string> files_;                        // 需要mapper处理的所有文件的文件名
 
     std::unordered_map<int, ReducerNode *> reducer_map_;    // reducer对应的ip和port信息
+    Imagine_Rpc::Stub* stub_;
 };
 
 } // namespace Imagine_MapReduce

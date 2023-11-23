@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+import "InternalType.proto";
+
+// Master提供的心跳函数
+
+message HeartBeatRequestMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    string file_name_ = 3;                      // 文件名
+    uint32 split_id_ = 4;                       // split的Id
+    TaskStatus task_status_ = 5;                // 任务状态
+    double task_progress_ = 6;                  // 任务进度
+}
+
+message HeartBeatResponseMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    Status status_ = 3;                          // 任务接收状态
+}

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+import "InternalType.proto";
+
+// Reducer提供的reduce函数 √
+
+message ReduceTaskRequestMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    string file_name_ = 3;                      // 原始文件名
+    string split_file_name_ = 4;                // split后的文件名(当前要获取的)
+    uint32 split_num_ = 5;                      // split数目
+    string mapper_ip_ = 6;                      // mapper监听Ip
+    string mapper_port_ = 7;                    // mapper监听Port
+    string master_ip_ = 8;                      // master监听Ip
+    string master_port_ = 9;                    // master监听Port
+}
+
+message ReduceTaskResponseMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    Status status_ = 3;                          // 任务接收状态
+}

@@ -3,8 +3,12 @@
 
 #include "Imagine_Rpc/RpcServer.h"
 #include "Imagine_Rpc/RpcClient.h"
+#include "Imagine_Rpc/Stub.h"
 #include "MapReduceUtil.h"
 #include "common_definition.h"
+#include "StartReduceService.h"
+#include "ReduceTaskService.h"
+#include "RetrieveSplitFileMessage.pb.h"
 
 #include <fcntl.h>
 #include <atomic>
@@ -12,6 +16,14 @@
 
 namespace Imagine_MapReduce
 {
+
+namespace Internal
+{
+
+template <typename key, typename value>
+class StartReduceService;
+
+} // namespace Internal
 
 template <typename key, typename value>
 class Reducer
@@ -122,8 +134,6 @@ class Reducer
 
     Reducer(YAML::Node config);
 
-    Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip = "", const std::string &keeper_port = "", ReduceCallback reduce = nullptr);
-
     ~Reducer();
 
     void Init(std::string profile_name);
@@ -132,23 +142,25 @@ class Reducer
 
     void InitLoop(YAML::Node config);
 
-    void InitProfilePath(std::string profile_name);
-
-    void GenerateSubmoduleProfile(YAML::Node config);
-
     void SetDefault();
 
     void loop();
 
     std::vector<std::string> Register(const std::vector<std::string> &input);
 
+    Reducer<key, value>* RegisterMaster(std::pair<std::string, std::string> master_node, const std::vector<std::string>& file_list);
+
     std::vector<std::string> Reduce(const std::vector<std::string> &input);
+
+    void ReceiveSplitFileData(const std::pair<std::string, std::string>& master_pair, const std::pair<std::string, std::string>& mapper_pair, const std::string& file_name, const std::string& split_file_name, size_t split_num);
 
     void StartMergeThread(MasterNode *master_node);
 
     bool WriteToDisk(const std::string &file_name, const std::string &file_content);
 
     bool SetDefaultReduceFunction();
+
+    Imagine_Rpc::Stub* GenerateNewStub();
 
  private:
     std::string ip_;
@@ -177,6 +189,8 @@ class Reducer
     pthread_mutex_t *map_lock_;
 
     std::unordered_map<std::pair<std::string, std::string>, MasterNode *, HashPair, EqualPair> master_map_;
+
+    Imagine_Rpc::Stub* stub_;
 };
 
 template <typename key, typename value>
@@ -197,24 +211,6 @@ Reducer<key, value>::Reducer(YAML::Node config)
 }
 
 template <typename key, typename value>
-Reducer<key, value>::Reducer(const std::string &ip, const std::string &port, const std::string &keeper_ip, const std::string &keeper_port, ReduceCallback reduce)
-                             : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), reduce_(reduce)
-{
-    if (reduce_ == nullptr) {
-        SetDefaultReduceFunction();
-    }
-
-    map_lock_ = new pthread_mutex_t;
-    if (pthread_mutex_init(map_lock_, nullptr) != 0) {
-        throw std::exception();
-    }
-
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
-    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
-    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
-}
-
-template <typename key, typename value>
 Reducer<key, value>::~Reducer()
 {
     delete rpc_server_;
@@ -230,10 +226,6 @@ void Reducer<key, value>::Init(std::string profile_name)
 
     YAML::Node config = YAML::LoadFile(profile_name);
     Init(config);
-
-    InitProfilePath(profile_name);
-
-    GenerateSubmoduleProfile(config);
 }
 
 template <typename key, typename value>
@@ -262,6 +254,7 @@ void Reducer<key, value>::Init(YAML::Node config)
     logger_->Init(config);
 
     InitLoop(config);
+    stub_ = new Imagine_Rpc::Stub(config);
 }
 
 template <typename key, typename value>
@@ -273,26 +266,8 @@ void Reducer<key, value>::InitLoop(YAML::Node config)
     }
 
     rpc_server_ = new Imagine_Rpc::RpcServer(config);
-    rpc_server_->Callee("Reduce", std::bind(&Reducer::Reduce, this, std::placeholders::_1));
-    rpc_server_->Callee("Register", std::bind(&Reducer::Register, this, std::placeholders::_1));
-}
-
-template <typename key, typename value>
-void Reducer<key, value>::InitProfilePath(std::string profile_name)
-{
-    size_t idx = profile_name.find_last_of("/");
-    profile_path_ = profile_name.substr(0, idx + 1);
-    rpc_profile_name_ = profile_path_ + "generate_Reducer_submodule_RPC_profile.yaml";
-}
-
-template <typename key, typename value>
-void Reducer<key, value>::GenerateSubmoduleProfile(YAML::Node config)
-{
-    std::ofstream fout(rpc_profile_name_.c_str());
-    config["log_name"] = "imagine_rpc_log.log";
-    config["max_channel_num"] = 10000;
-    fout << config;
-    fout.close();
+    rpc_server_->RegisterService(new Internal::StartReduceService<key, value>(this));
+    rpc_server_->RegisterService(new Internal::ReduceTaskService<key, value>(this));
 }
 
 template <typename key, typename value>
@@ -304,33 +279,22 @@ void Reducer<key, value>::SetDefault()
 template <typename key, typename value>
 void Reducer<key, value>::loop()
 {
-    rpc_server_->loop();
+    rpc_server_->Start();
 }
 
 template <typename key, typename value>
-std::vector<std::string> Reducer<key, value>::Register(const std::vector<std::string> &input)
+Reducer<key, value>* Reducer<key, value>::RegisterMaster(std::pair<std::string, std::string> master_pair, const std::vector<std::string>& file_list)
 {
-    /*
-    信息格式
-        -1.文件总数
-        -2.文件名列表
-        -3.master_ip
-        -4.master_port
-    */
-    LOG_INFO("This is Register Method !");
-    // for(int i=0;i<input.size();i++)printf("%s\n",&input[i][0]);
-    int new_master_file_num = MapReduceUtil::StringToInt(input[0]);
-    std::pair<std::string, std::string> new_master_pair = std::make_pair(input[new_master_file_num + 1], input[new_master_file_num + 2]);
     pthread_mutex_lock(map_lock_);
-    if (master_map_.find(new_master_pair) != master_map_.end()) {
+    if (master_map_.find(master_pair) != master_map_.end()) {
         // 重复注册
         throw std::exception();
     }
     MasterNode *new_master = new MasterNode;
-    new_master->file_num_ = new_master_file_num;
-    for (int i = 0; i < new_master_file_num; i++) {
+    new_master->file_num_ = file_list.size();
+    for (int i = 0; i < file_list.size(); i++) {
         std::unordered_map<std::string, int> temp_map;
-        new_master->files_.insert(std::make_pair(input[i + 1], temp_map));
+        new_master->files_.insert(std::make_pair(file_list[i], temp_map));
     }
     new_master->memory_thread_ = new pthread_t;
     new_master->disk_thread_ = new pthread_t;
@@ -345,13 +309,11 @@ std::vector<std::string> Reducer<key, value>::Register(const std::vector<std::st
 
     StartMergeThread(new_master); // 开启merge线程
 
-    master_map_.insert(std::make_pair(new_master_pair, new_master));
+    master_map_.insert(std::make_pair(master_pair, new_master));LOG_INFO("???????????");
     // rpc_server->SetTimer();
-    pthread_mutex_unlock(map_lock_);
-    std::vector<std::string> output;
-    output.push_back("Receive!");
+    pthread_mutex_unlock(map_lock_);LOG_INFO("???????????");
 
-    return output;
+    return this;
 }
 
 template <typename key, typename value>
@@ -405,7 +367,7 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     parameters.push_back(split_name);
 
     pthread_mutex_lock(master_node->memory_list_lock_);
-    master_node->memory_file_list_.push_front(Imagine_Rpc::RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
+    // master_node->memory_file_list_.push_front(Imagine_Rpc::RpcClient::Call(method_name, parameters, mapper_ip, mapper_port)[0]);
     if ((*master_node->memory_file_list_.begin()).size()) {
         LOG_INFO("split file %s content : %s", &split_name[0], &(*master_node->memory_file_list_.begin())[0]);
     } else {
@@ -439,6 +401,75 @@ std::vector<std::string> Reducer<key, value>::Reduce(const std::vector<std::stri
     output.push_back("Receive!\n");
 
     return output;
+}
+
+template <typename key, typename value>
+void Reducer<key, value>::ReceiveSplitFileData(const std::pair<std::string, std::string>& master_pair, const std::pair<std::string, std::string>& mapper_pair, const std::string& file_name, const std::string& split_file_name, size_t split_num)
+{
+    pthread_mutex_lock(map_lock_);
+    typename std::unordered_map<std::pair<std::string, std::string>, MasterNode *, HashPair, EqualPair>::iterator master_it = master_map_.find(master_pair); // 找到MasterNode*
+    if (master_it == master_map_.end()) {
+        // 该master没有register
+        LOG_INFO("NO Register Master Error!");
+        throw std::exception();
+    }
+    MasterNode *master_node = master_it->second;
+    std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator file_it = master_node->files_.find(file_name); // 找到对应的file
+    if (file_it == master_it->second->files_.end()) {
+        // 错误的文件名
+        LOG_INFO("File name Error! Get File Name %s", file_name.c_str());
+        throw std::exception();
+    }
+    std::unordered_map<std::string, int>::iterator split_it = file_it->second.find(split_file_name);
+    if (split_it != file_it->second.end()) {
+        // 重复接收同一个split文件
+        LOG_INFO("Repeat Split File Error! Get Split File Name %s", split_file_name.c_str());
+        throw std::exception();
+    }
+    pthread_mutex_unlock(map_lock_);
+
+    // 从mapper获取split文件
+    Internal::RetrieveSplitFileRequestMessage request_msg;
+    Internal::RetrieveSplitFileResponseMessage response_msg;
+    Imagine_Rpc::Stub* stub = GenerateNewStub();
+    stub->SetServiceName(INTERNAL_RETRIEVE_SPLIT_FILE_SERVICE_NAME)->SetMethodName(INTERNAL_RETRIEVE_SPLIT_FILE_METHOD_NAME)->SetServerIp(mapper_pair.first)->SetServerPort(mapper_pair.second);
+    MapReduceUtil::GenerateRetrieveSplitFileMessage(&request_msg, split_file_name);
+    stub->Call(&request_msg, &response_msg);
+
+    delete stub;
+
+    pthread_mutex_lock(master_node->memory_list_lock_);
+    master_node->memory_file_list_.push_front(response_msg.split_file_content_());
+    if ((*master_node->memory_file_list_.begin()).size()) {
+        LOG_INFO("split file %s content : %s", &split_file_name[0], &(*master_node->memory_file_list_.begin())[0]);
+    } else {
+        LOG_INFO("split file %s content : NoContent!", &split_file_name[0]);
+    }
+    master_node->memory_file_size_ += master_node->memory_file_list_.front().size();
+    pthread_mutex_unlock(master_node->memory_list_lock_);
+
+    pthread_mutex_lock(map_lock_);
+    split_it = file_it->second.find(split_file_name);
+    if (split_it != file_it->second.end()) {
+        // 重复接收同一个split文件
+        LOG_INFO("Repeat Retrieve Split File Error! Get Split File Name %s", split_file_name.c_str());
+        throw std::exception();
+    }
+    file_it->second.insert(std::make_pair(split_file_name, 1));
+    master_it = master_map_.find(master_pair);
+    file_it = master_it->second->files_.find(file_name);
+    if (file_it->second.size() == split_num) {
+        master_it->second->count_++;
+    }
+
+    if (static_cast<size_t>(master_it->second->count_) == master_it->second->files_.size()) {
+        // 所有文件接收完毕,可以开始执行
+        LOG_INFO("Receive All Split File! Start Finally Merge!");
+        master_node->receive_all_.store(true);
+        while (master_node->disk_merge_.load());
+        LOG_INFO("TaskOver!");
+    }
+    pthread_mutex_unlock(map_lock_);
 }
 
 template <typename key, typename value>
@@ -499,6 +530,12 @@ bool Reducer<key, value>::SetDefaultReduceFunction()
     reduce_ = MapReduceUtil::DefaultReduceFunction;
 
     return true;
+}
+
+template <typename key, typename value>
+Imagine_Rpc::Stub* Reducer<key, value>::GenerateNewStub()
+{
+    return new Imagine_Rpc::Stub(*stub_);
 }
 
 } // namespace Imagine_MapReduce
