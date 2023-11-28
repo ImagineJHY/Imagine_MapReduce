@@ -630,6 +630,87 @@ imagine_rpc/fast:
 	$(MAKE) -f thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build.make thirdparty/Imagine_System/worker/Imagine_Rpc/CMakeFiles/imagine_rpc.dir/build
 .PHONY : imagine_rpc/fast
 
+src/HeartBeatMessage.pb.o: src/HeartBeatMessage.pb.cc.o
+
+.PHONY : src/HeartBeatMessage.pb.o
+
+# target to build an object file
+src/HeartBeatMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatMessage.pb.cc.o
+.PHONY : src/HeartBeatMessage.pb.cc.o
+
+src/HeartBeatMessage.pb.i: src/HeartBeatMessage.pb.cc.i
+
+.PHONY : src/HeartBeatMessage.pb.i
+
+# target to preprocess a source file
+src/HeartBeatMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatMessage.pb.cc.i
+.PHONY : src/HeartBeatMessage.pb.cc.i
+
+src/HeartBeatMessage.pb.s: src/HeartBeatMessage.pb.cc.s
+
+.PHONY : src/HeartBeatMessage.pb.s
+
+# target to generate assembly for a file
+src/HeartBeatMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatMessage.pb.cc.s
+.PHONY : src/HeartBeatMessage.pb.cc.s
+
+src/HeartBeatService.o: src/HeartBeatService.cpp.o
+
+.PHONY : src/HeartBeatService.o
+
+# target to build an object file
+src/HeartBeatService.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatService.cpp.o
+.PHONY : src/HeartBeatService.cpp.o
+
+src/HeartBeatService.i: src/HeartBeatService.cpp.i
+
+.PHONY : src/HeartBeatService.i
+
+# target to preprocess a source file
+src/HeartBeatService.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatService.cpp.i
+.PHONY : src/HeartBeatService.cpp.i
+
+src/HeartBeatService.s: src/HeartBeatService.cpp.s
+
+.PHONY : src/HeartBeatService.s
+
+# target to generate assembly for a file
+src/HeartBeatService.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatService.cpp.s
+.PHONY : src/HeartBeatService.cpp.s
+
+src/InternalType.pb.o: src/InternalType.pb.cc.o
+
+.PHONY : src/InternalType.pb.o
+
+# target to build an object file
+src/InternalType.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InternalType.pb.cc.o
+.PHONY : src/InternalType.pb.cc.o
+
+src/InternalType.pb.i: src/InternalType.pb.cc.i
+
+.PHONY : src/InternalType.pb.i
+
+# target to preprocess a source file
+src/InternalType.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InternalType.pb.cc.i
+.PHONY : src/InternalType.pb.cc.i
+
+src/InternalType.pb.s: src/InternalType.pb.cc.s
+
+.PHONY : src/InternalType.pb.s
+
+# target to generate assembly for a file
+src/InternalType.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InternalType.pb.cc.s
+.PHONY : src/InternalType.pb.cc.s
+
 src/KVBuffer.o: src/KVBuffer.cpp.o
 
 .PHONY : src/KVBuffer.o
@@ -711,6 +792,60 @@ src/MapReduceUtil.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/MapReduceUtil.cpp.s
 .PHONY : src/MapReduceUtil.cpp.s
 
+src/MapTaskMessage.pb.o: src/MapTaskMessage.pb.cc.o
+
+.PHONY : src/MapTaskMessage.pb.o
+
+# target to build an object file
+src/MapTaskMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/MapTaskMessage.pb.cc.o
+.PHONY : src/MapTaskMessage.pb.cc.o
+
+src/MapTaskMessage.pb.i: src/MapTaskMessage.pb.cc.i
+
+.PHONY : src/MapTaskMessage.pb.i
+
+# target to preprocess a source file
+src/MapTaskMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/MapTaskMessage.pb.cc.i
+.PHONY : src/MapTaskMessage.pb.cc.i
+
+src/MapTaskMessage.pb.s: src/MapTaskMessage.pb.cc.s
+
+.PHONY : src/MapTaskMessage.pb.s
+
+# target to generate assembly for a file
+src/MapTaskMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/MapTaskMessage.pb.cc.s
+.PHONY : src/MapTaskMessage.pb.cc.s
+
+src/ReduceTaskMessage.pb.o: src/ReduceTaskMessage.pb.cc.o
+
+.PHONY : src/ReduceTaskMessage.pb.o
+
+# target to build an object file
+src/ReduceTaskMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/ReduceTaskMessage.pb.cc.o
+.PHONY : src/ReduceTaskMessage.pb.cc.o
+
+src/ReduceTaskMessage.pb.i: src/ReduceTaskMessage.pb.cc.i
+
+.PHONY : src/ReduceTaskMessage.pb.i
+
+# target to preprocess a source file
+src/ReduceTaskMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/ReduceTaskMessage.pb.cc.i
+.PHONY : src/ReduceTaskMessage.pb.cc.i
+
+src/ReduceTaskMessage.pb.s: src/ReduceTaskMessage.pb.cc.s
+
+.PHONY : src/ReduceTaskMessage.pb.s
+
+# target to generate assembly for a file
+src/ReduceTaskMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/ReduceTaskMessage.pb.cc.s
+.PHONY : src/ReduceTaskMessage.pb.cc.s
+
 src/Reducer.o: src/Reducer.cpp.o
 
 .PHONY : src/Reducer.o
@@ -737,6 +872,168 @@ src/Reducer.s: src/Reducer.cpp.s
 src/Reducer.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/Reducer.cpp.s
 .PHONY : src/Reducer.cpp.s
+
+src/RetrieveSplitFileMessage.pb.o: src/RetrieveSplitFileMessage.pb.cc.o
+
+.PHONY : src/RetrieveSplitFileMessage.pb.o
+
+# target to build an object file
+src/RetrieveSplitFileMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileMessage.pb.cc.o
+.PHONY : src/RetrieveSplitFileMessage.pb.cc.o
+
+src/RetrieveSplitFileMessage.pb.i: src/RetrieveSplitFileMessage.pb.cc.i
+
+.PHONY : src/RetrieveSplitFileMessage.pb.i
+
+# target to preprocess a source file
+src/RetrieveSplitFileMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileMessage.pb.cc.i
+.PHONY : src/RetrieveSplitFileMessage.pb.cc.i
+
+src/RetrieveSplitFileMessage.pb.s: src/RetrieveSplitFileMessage.pb.cc.s
+
+.PHONY : src/RetrieveSplitFileMessage.pb.s
+
+# target to generate assembly for a file
+src/RetrieveSplitFileMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileMessage.pb.cc.s
+.PHONY : src/RetrieveSplitFileMessage.pb.cc.s
+
+src/RetrieveSplitFileService.o: src/RetrieveSplitFileService.cpp.o
+
+.PHONY : src/RetrieveSplitFileService.o
+
+# target to build an object file
+src/RetrieveSplitFileService.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileService.cpp.o
+.PHONY : src/RetrieveSplitFileService.cpp.o
+
+src/RetrieveSplitFileService.i: src/RetrieveSplitFileService.cpp.i
+
+.PHONY : src/RetrieveSplitFileService.i
+
+# target to preprocess a source file
+src/RetrieveSplitFileService.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileService.cpp.i
+.PHONY : src/RetrieveSplitFileService.cpp.i
+
+src/RetrieveSplitFileService.s: src/RetrieveSplitFileService.cpp.s
+
+.PHONY : src/RetrieveSplitFileService.s
+
+# target to generate assembly for a file
+src/RetrieveSplitFileService.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/RetrieveSplitFileService.cpp.s
+.PHONY : src/RetrieveSplitFileService.cpp.s
+
+src/StartReduceMessage.pb.o: src/StartReduceMessage.pb.cc.o
+
+.PHONY : src/StartReduceMessage.pb.o
+
+# target to build an object file
+src/StartReduceMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StartReduceMessage.pb.cc.o
+.PHONY : src/StartReduceMessage.pb.cc.o
+
+src/StartReduceMessage.pb.i: src/StartReduceMessage.pb.cc.i
+
+.PHONY : src/StartReduceMessage.pb.i
+
+# target to preprocess a source file
+src/StartReduceMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StartReduceMessage.pb.cc.i
+.PHONY : src/StartReduceMessage.pb.cc.i
+
+src/StartReduceMessage.pb.s: src/StartReduceMessage.pb.cc.s
+
+.PHONY : src/StartReduceMessage.pb.s
+
+# target to generate assembly for a file
+src/StartReduceMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StartReduceMessage.pb.cc.s
+.PHONY : src/StartReduceMessage.pb.cc.s
+
+src/TaskCompleteMessage.pb.o: src/TaskCompleteMessage.pb.cc.o
+
+.PHONY : src/TaskCompleteMessage.pb.o
+
+# target to build an object file
+src/TaskCompleteMessage.pb.cc.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteMessage.pb.cc.o
+.PHONY : src/TaskCompleteMessage.pb.cc.o
+
+src/TaskCompleteMessage.pb.i: src/TaskCompleteMessage.pb.cc.i
+
+.PHONY : src/TaskCompleteMessage.pb.i
+
+# target to preprocess a source file
+src/TaskCompleteMessage.pb.cc.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteMessage.pb.cc.i
+.PHONY : src/TaskCompleteMessage.pb.cc.i
+
+src/TaskCompleteMessage.pb.s: src/TaskCompleteMessage.pb.cc.s
+
+.PHONY : src/TaskCompleteMessage.pb.s
+
+# target to generate assembly for a file
+src/TaskCompleteMessage.pb.cc.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteMessage.pb.cc.s
+.PHONY : src/TaskCompleteMessage.pb.cc.s
+
+src/TaskCompleteService.o: src/TaskCompleteService.cpp.o
+
+.PHONY : src/TaskCompleteService.o
+
+# target to build an object file
+src/TaskCompleteService.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteService.cpp.o
+.PHONY : src/TaskCompleteService.cpp.o
+
+src/TaskCompleteService.i: src/TaskCompleteService.cpp.i
+
+.PHONY : src/TaskCompleteService.i
+
+# target to preprocess a source file
+src/TaskCompleteService.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteService.cpp.i
+.PHONY : src/TaskCompleteService.cpp.i
+
+src/TaskCompleteService.s: src/TaskCompleteService.cpp.s
+
+.PHONY : src/TaskCompleteService.s
+
+# target to generate assembly for a file
+src/TaskCompleteService.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteService.cpp.s
+.PHONY : src/TaskCompleteService.cpp.s
+
+src/temp.o: src/temp.cpp.o
+
+.PHONY : src/temp.o
+
+# target to build an object file
+src/temp.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.o
+.PHONY : src/temp.cpp.o
+
+src/temp.i: src/temp.cpp.i
+
+.PHONY : src/temp.i
+
+# target to preprocess a source file
+src/temp.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.i
+.PHONY : src/temp.cpp.i
+
+src/temp.s: src/temp.cpp.s
+
+.PHONY : src/temp.s
+
+# target to generate assembly for a file
+src/temp.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.s
+.PHONY : src/temp.cpp.s
 
 # Help Target
 help:
@@ -786,6 +1083,15 @@ help:
 	@echo "... imagine_muduo"
 	@echo "... imagine_zookeeper"
 	@echo "... imagine_rpc"
+	@echo "... src/HeartBeatMessage.pb.o"
+	@echo "... src/HeartBeatMessage.pb.i"
+	@echo "... src/HeartBeatMessage.pb.s"
+	@echo "... src/HeartBeatService.o"
+	@echo "... src/HeartBeatService.i"
+	@echo "... src/HeartBeatService.s"
+	@echo "... src/InternalType.pb.o"
+	@echo "... src/InternalType.pb.i"
+	@echo "... src/InternalType.pb.s"
 	@echo "... src/KVBuffer.o"
 	@echo "... src/KVBuffer.i"
 	@echo "... src/KVBuffer.s"
@@ -795,9 +1101,33 @@ help:
 	@echo "... src/MapReduceUtil.o"
 	@echo "... src/MapReduceUtil.i"
 	@echo "... src/MapReduceUtil.s"
+	@echo "... src/MapTaskMessage.pb.o"
+	@echo "... src/MapTaskMessage.pb.i"
+	@echo "... src/MapTaskMessage.pb.s"
+	@echo "... src/ReduceTaskMessage.pb.o"
+	@echo "... src/ReduceTaskMessage.pb.i"
+	@echo "... src/ReduceTaskMessage.pb.s"
 	@echo "... src/Reducer.o"
 	@echo "... src/Reducer.i"
 	@echo "... src/Reducer.s"
+	@echo "... src/RetrieveSplitFileMessage.pb.o"
+	@echo "... src/RetrieveSplitFileMessage.pb.i"
+	@echo "... src/RetrieveSplitFileMessage.pb.s"
+	@echo "... src/RetrieveSplitFileService.o"
+	@echo "... src/RetrieveSplitFileService.i"
+	@echo "... src/RetrieveSplitFileService.s"
+	@echo "... src/StartReduceMessage.pb.o"
+	@echo "... src/StartReduceMessage.pb.i"
+	@echo "... src/StartReduceMessage.pb.s"
+	@echo "... src/TaskCompleteMessage.pb.o"
+	@echo "... src/TaskCompleteMessage.pb.i"
+	@echo "... src/TaskCompleteMessage.pb.s"
+	@echo "... src/TaskCompleteService.o"
+	@echo "... src/TaskCompleteService.i"
+	@echo "... src/TaskCompleteService.s"
+	@echo "... src/temp.o"
+	@echo "... src/temp.i"
+	@echo "... src/temp.s"
 .PHONY : help
 
 

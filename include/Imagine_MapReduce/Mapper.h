@@ -12,12 +12,23 @@
 #include "common_definition.h"
 #include "Partitioner.h"
 #include "StringPartitioner.h"
+#include "MapTaskService.h"
+#include "HeartBeatMessage.pb.h"
+#include "RetrieveSplitFileService.h"
 
 #include <memory.h>
 #include <fstream>
 
 namespace Imagine_MapReduce
 {
+
+namespace Internal
+{
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+class MapTaskService;
+
+} // namespace Internal
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 class Mapper
@@ -29,8 +40,6 @@ class Mapper
 
     Mapper(YAML::Node config);
 
-    Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader = nullptr, MAP map = nullptr, Partitioner<key> *partitioner = nullptr, OutputFormat<key, value> *output_format = nullptr, MAPTIMER timer_callback = nullptr, const std::string &keeper_ip = "", const std::string &keeper_port = "");
-
     ~Mapper();
 
     void Init(std::string profile_name);
@@ -39,16 +48,20 @@ class Mapper
 
     void InitLoop(YAML::Node config);
 
-    void InitProfilePath(std::string profile_name);
-
-    void GenerateSubmoduleProfile(YAML::Node config);
-
     void SetDefault();
 
     // Rpc通信调用
     std::vector<std::string> Map(const std::vector<std::string> &input);
 
     std::vector<std::string> GetFile(const std::vector<std::string> &input);
+
+    std::shared_ptr<RecordReader<reader_key, reader_value>> GenerateRecordReader(InputSplit *split, int split_id);
+
+    MapRunner<reader_key, reader_value, key, value>* GenerateMapRunner(int split_id, int split_num, const std::string file_name, const std::string &master_ip, const std::string &master_port);
+
+    Imagine_Rpc::Stub* GenerateNewStub();
+
+    MAPTIMER GetTimerCallback();
 
     bool SetDefaultRecordReader();
 
@@ -60,7 +73,7 @@ class Mapper
 
     bool SetDefaultPartitioner();
 
-    static void DefaultTimerCallback(int sockfd, std::shared_ptr<RecordReader<reader_key, reader_value>> reader);
+    static void DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub> stub, std::shared_ptr<RecordReader<reader_key, reader_value>> reader);
 
     void loop();
 
@@ -99,6 +112,8 @@ class Mapper
     Imagine_Tool::Logger* logger_;
 
     Partitioner<key> *partitioner_;
+
+    Imagine_Rpc::Stub* stub_;
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -117,37 +132,6 @@ template <typename reader_key, typename reader_value, typename key, typename val
 Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config) : Mapper()
 {
     Init(config);
-}
-
-template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(const std::string &ip, const std::string &port, RecordReader<reader_key, reader_value> *record_reader, MAP map, Partitioner<key> *partitioner, OutputFormat<key, value> *output_format, MAPTIMER timer_callback, const std::string &keeper_ip, const std::string &keeper_port)
-                                            : ip_(ip), port_(port), zookeeper_ip_(keeper_ip), zookeeper_port_(keeper_port), timer_callback_(timer_callback), record_reader_(record_reader), output_format_(output_format), partitioner_(partitioner)
-{
-    rpc_server_thread_ = new pthread_t;
-    if (!rpc_server_thread_) {
-        throw std::exception();
-    }
-
-    if (record_reader_ == nullptr) {
-        record_reader_ = new LineRecordReader();
-    }
-    if (map_ == nullptr) {
-        SetDefaultMapFunction();
-    }
-    if (output_format_ == nullptr) {
-        SetDefaultOutputFormat();
-    }
-    if (timer_callback_ == nullptr) {
-        SetDefaultTimerCallback();
-    }
-    if (partitioner_ == nullptr) {
-        SetDefaultPartitioner();
-    }
-
-    rpc_server_ = new Imagine_Rpc::RpcServer(ip_, port_, zookeeper_ip_, zookeeper_port_);
-
-    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
-    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -171,10 +155,6 @@ void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name
 
     YAML::Node config = YAML::LoadFile(profile_name);
     Init(config);
-
-    InitProfilePath(profile_name);
-
-    GenerateSubmoduleProfile(config);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -205,6 +185,7 @@ void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
     logger_->Init(config);
 
     InitLoop(config);
+    stub_ = new Imagine_Rpc::Stub(config);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -232,28 +213,32 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
     }
 
     rpc_server_ = new Imagine_Rpc::RpcServer(config);
-
-    rpc_server_->Callee("Map", std::bind(&Mapper::Map, this, std::placeholders::_1));
-    rpc_server_->Callee("GetFile", std::bind(&Mapper::GetFile, this, std::placeholders::_1));
-}
-
-
-template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::InitProfilePath(std::string profile_name)
-{
-    size_t idx = profile_name.find_last_of("/");
-    profile_path_ = profile_name.substr(0, idx + 1);
-    rpc_profile_name_ = profile_path_ + "generate_Mapper_submodule_RPC_profile.yaml";
+    rpc_server_->RegisterService(new Internal::MapTaskService<reader_key, reader_value, key, value>(this));
+    rpc_server_->RegisterService(new Internal::RetrieveSplitFileService());
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::GenerateSubmoduleProfile(YAML::Node config)
+std::shared_ptr<RecordReader<reader_key, reader_value>> Mapper<reader_key, reader_value, key, value>::GenerateRecordReader(InputSplit *split, int split_id)
 {
-    std::ofstream fout(rpc_profile_name_.c_str());
-    config["log_name"] = "imagine_rpc_log.log";
-    config["max_channel_num"] = 10000;
-    fout << config;
-    fout.close();
+    return record_reader_->CreateRecordReader(split, split_id);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+MapRunner<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::GenerateMapRunner(int split_id, int split_num, const std::string file_name, const std::string &master_ip, const std::string &master_port)
+{
+    return new MapRunner<reader_key, reader_value, key, value>(split_id, split_num, file_name, ip_, port_, master_ip, master_port, map_, partitioner_, output_format_, rpc_server_);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Imagine_Rpc::Stub* Mapper<reader_key, reader_value, key, value>::GenerateNewStub()
+{
+    return new Imagine_Rpc::Stub(*stub_);
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+MAPTIMER Mapper<reader_key, reader_value, key, value>::GetTimerCallback()
+{
+    return timer_callback_;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -263,92 +248,6 @@ void Mapper<reader_key, reader_value, key, value>::SetDefault()
     SetDefaultOutputFormat();
     SetDefaultTimerCallback();
     SetDefaultPartitioner();
-}
-
-template <typename reader_key, typename reader_value, typename key, typename value>
-std::vector<std::string> Mapper<reader_key, reader_value, key, value>::Map(const std::vector<std::string> &input)
-{
-    /*
-    数据格式：
-        1.目标文件名(路径)
-        2.split大小
-        3.MapReduceMaster的ip
-        4.MapReduceMaster的port
-        5.目标文件ip(若在本地则省略)
-        6.目标文件port(若在本地则省略)
-    注:对于split的跨行问题:到达split时多读一行(多读一个完整的\r\n进来),并且让除第一块意外的每个Mapper都跳过第一行数据(split起始位置为0不跳行,反之跳行)
-    */
-
-    // 获取split数据
-    std::vector<InputSplit *> splits = MapReduceUtil::DefaultReadSplitFunction(input[0], MapReduceUtil::StringToInt(input[1])); // 传入目标文件名和split大小
-    // map(MapReduceUtil::DefaultReadSplitFunction(input[2]));
-    // 将数据按要求转换成kv数据
-    // std::unordered_map<std::string,std::string> kv_map=record_reader(splits);
-    map_threads_ = new pthread_t[splits.size()];
-    for (size_t i = 0; i < splits.size(); i++) {
-        std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_->CreateRecordReader(splits[i], i + 1);
-        // new_record_reader->SetOutputFileName("split"+MapReduceUtil::IntToString(i+1)+".txt");
-        MapRunner<reader_key, reader_value, key, value> *runner = new MapRunner<reader_key, reader_value, key, value>(i + 1, splits.size(), input[0], ip_, port_, input[2], input[3], map_, partitioner_, output_format_, rpc_server_);
-        runner->SetRecordReader(new_record_reader);
-        runner->SetTimerCallback(timer_callback_);
-        pthread_create(
-            map_threads_ + i, nullptr, [](void *argv) -> void *
-            {
-                MapRunner<reader_key, reader_value, key, value> *runner = (MapRunner<reader_key, reader_value, key, value> *)argv;
-                MAP map = runner->GetMap();
-                std::shared_ptr<RecordReader<reader_key, reader_value>> reader = runner->GetRecordReader();
-                // OutputFormat<key, value> *output_format = runner->GetOutPutFormat();
-
-                // 连接Master
-                int sockfd;
-                long long timerfd;
-                if (Imagine_Rpc::RpcClient::ConnectServer(runner->GetMasterIp(), runner->GetMasterPort(), &sockfd)) {
-                    std::vector<std::string> parameters;
-                    parameters.push_back("Mapper");
-                    parameters.push_back(runner->GetFileName());
-                    parameters.push_back(MapReduceUtil::IntToString(runner->GetId()));
-                    parameters.push_back("Start");
-                    if (Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd)[0] == "Receive") {
-                        timerfd = runner->GetRpcServer()->SetTimer(2.0, 0.0, std::bind(runner->GetTimerCallback(), sockfd, reader));
-                    } else {
-                        throw std::exception();
-                    }
-                }
-
-                runner->StartSpillingThread();
-                sleep(1);
-                while (reader->NextKeyValue()) {
-                    runner->WriteToBuffer(map(reader->GetCurrentKey(), reader->GetCurrentValue()));
-                }
-
-                runner->CompleteMapping(); // buffer在spill线程中销毁
-
-                runner->GetRpcServer()->RemoveTimer(timerfd);
-                std::vector<std::string> parameters;
-                parameters.push_back("Mapper");
-                parameters.push_back(runner->GetFileName());
-                parameters.push_back(MapReduceUtil::IntToString(runner->GetId()));
-                parameters.push_back("Finish");
-                parameters.push_back(runner->GetMapperIp());
-                parameters.push_back(runner->GetMapperPort());
-                parameters.push_back(MapReduceUtil::IntToString(runner->GetSplitNum()));
-                std::vector<std::string> &shuffle = runner->GetShuffleFile();
-                parameters.insert(parameters.end(), shuffle.begin(), shuffle.end());
-                // printf("%s : working is finish!\n",&split_file_name[0]);
-                Imagine_Rpc::RpcClient::Call("MapReduceCenter", parameters, &sockfd);
-
-                delete runner;
-
-                close(sockfd);
-                // close(fd);
-
-                return nullptr;
-            },
-            runner);
-        pthread_detach(*(map_threads_ + i));
-    }
-
-    return Imagine_Rpc::Rpc::Deserialize("");
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -400,27 +299,6 @@ bool Mapper<reader_key, reader_value, key, value>::SetDefaultTimerCallback()
 {
     timer_callback_ = DefaultTimerCallback;
     return true;
-    // timer_callback=[](int sockfd, std::shared_ptr<RecordReader<reader_key,reader_value>> reader){
-    //     printf("this is timer callback!\n");
-    //     if(reader.use_count()==1){
-    //     printf("mapper已完成!\n");
-    //     return;
-    //     }
-    //     //printf("sockfd is %d\n",sockfd);
-    //     std::string method="MapReduceCenter";
-    //     std::vector<std::string> parameters;
-    //     parameters.push_back("Mapper");
-    //     parameters.push_back(reader->GetOutputFileName());
-    //     parameters.push_back("Process");
-    //     parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
-
-    //     std::vector<std::string> recv_=Imagine_Rpc::RpcClient::Call(method,parameters,&sockfd);
-    //     if(recv_.size()&&recv_[0]=="Receive"){
-    //         printf("connect ok!\n");
-    //     }else{
-    //         printf("connect error!\n");
-    //     }
-    // }
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -446,7 +324,7 @@ void Mapper<reader_key, reader_value, key, value>::loop()
         rpc_server_thread_, nullptr, [](void *argv) -> void *
         {
             Imagine_Rpc::RpcServer* rpc_server = (Imagine_Rpc::RpcServer*)argv;
-            rpc_server->loop();
+            rpc_server->Start();
 
             return nullptr;
         }, 
@@ -455,27 +333,22 @@ void Mapper<reader_key, reader_value, key, value>::loop()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(int sockfd, std::shared_ptr<RecordReader<reader_key, reader_value>> reader)
+void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub> stub, std::shared_ptr<RecordReader<reader_key, reader_value>> reader)
 {
-    // printf("this is timer callback!\n");
     if (reader.use_count() == 1) {
+        reader.reset();
+        stub.reset();
         LOG_INFO("This Mapper Task Over!");
         return;
     }
-    // printf("sockfd is %d\n",sockfd);
-    std::string method = "MapReduceCenter";
-    std::vector<std::string> parameters;
-    parameters.push_back("Mapper");
-    parameters.push_back(reader->GetFileName());
-    parameters.push_back(MapReduceUtil::IntToString(reader->GetSplitId()));
-    parameters.push_back("Process");
-    parameters.push_back(MapReduceUtil::DoubleToString(reader->GetProgress()));
+    Internal::HeartBeatRequestMessage request_msg;
+    Internal::HeartBeatResponseMessage response_msg;
+    MapReduceUtil::GenerateHeartBeatProcessMessage(&request_msg, Internal::Identity::Mapper, reader->GetFileName(), reader->GetSplitId(), reader->GetProgress());
+    stub->CallConnectServer(&request_msg, &response_msg);
 
-    std::vector<std::string> temp_recv = Imagine_Rpc::RpcClient::Call(method, parameters, &sockfd);
-    if (temp_recv.size() && temp_recv[0] == "Receive") {
-        // printf("connect ok!\n");
+    if (response_msg.status_() == Internal::Status::Ok) {
     } else {
-        LOG_INFO("connect error!");
+        throw std::exception();
     }
 }
 

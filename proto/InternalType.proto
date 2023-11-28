@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+
+enum Identity {
+    Mapper = 0;
+    Reducer = 1;
+    Master = 2;
+}
+
+enum TaskStatus {
+    Start = 0;                              // 汇报任务开始
+    Process = 1;                            // 汇报任务进度
+    Finish = 2;                             // 汇报任务完成
+}
+
+enum Status {
+    Ok = 0;
+    Error = 1;
+}

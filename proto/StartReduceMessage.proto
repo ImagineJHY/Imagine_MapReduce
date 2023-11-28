@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+import "InternalType.proto";
+
+// Reducer提供的Reduce-pre函数 √
+
+message StartReduceRequestMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    string listen_ip_ = 3;                      // master监听Ip
+    string listen_port_ = 4;                    // master监听Port
+    repeated string file_list_ = 5;             // 文件列表
+}
+
+message StartReduceResponseMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    Status status_ = 3;                         // 任务接收状态
+}

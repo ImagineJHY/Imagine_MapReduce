@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package Imagine_MapReduce.Internal;
+import "InternalType.proto";
+
+// Master提供的任务完成函数 √
+
+message TaskCompleteRequestMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    string file_name_ = 3;                      // 文件名
+    uint32 split_id_ = 4;                       // split的Id
+    uint32 split_num_ = 5;                      // split的数目(Reducer不填)
+    string listen_ip_ = 6;                      // master监听Ip
+    string listen_port_ = 7;                    // master监听Port
+    repeated string file_list_ = 8;             // 文件列表
+}
+
+message TaskCompleteResponseMessage {
+    Identity send_identity_ = 1;                // 发送者身份
+    Identity recv_identity_ = 2;                // 接收者身份
+    Status status_ = 3;                          // 任务接收状态
+}

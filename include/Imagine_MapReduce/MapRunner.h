@@ -65,6 +65,13 @@ class MapRunner
         }
     }
 
+    MapRunner<reader_key, reader_value, key, value>* const SetThread(pthread_t* thread)
+    {
+        thread_ = thread;
+
+        return this;
+    }
+
     bool SetIp(const std::string &ip)
     {
         master_ip_ = ip;
@@ -101,6 +108,20 @@ class MapRunner
         return true;
     }
 
+    bool SetHeartBeatStub(Imagine_Rpc::Stub* stub)
+    {
+        heartbeat_stub_.reset(stub);
+
+        return true;
+    }
+
+    bool SetCompleteStub(Imagine_Rpc::Stub* stub)
+    {
+        complete_stub_.reset(stub);
+
+        return true;
+    }
+
     int GetSplitNum() { return split_num_; }
 
     std::string GetFileName() { return file_name_; }
@@ -124,6 +145,10 @@ class MapRunner
     OutputFormat<key, value> *GetOutPutFormat() { return output_format_; }
 
     int GetId() { return split_id_; }
+
+    std::shared_ptr<Imagine_Rpc::Stub> GetHeartBeatStub() { return heartbeat_stub_; }
+
+    std::shared_ptr<Imagine_Rpc::Stub> GetCompleteStub() { return complete_stub_; }
 
     bool WriteToBuffer(const std::pair<key, value> &content)
     {
@@ -264,6 +289,8 @@ class MapRunner
     const std::string mapper_ip_;    // mapper的ip
     const std::string mapper_port_;  // mapper的port
 
+    pthread_t* thread_;
+
     std::shared_ptr<RecordReader<reader_key, reader_value>> record_reader_;
     OutputFormat<key, value> *output_format_;
     Partitioner<key> *partitioner_;
@@ -278,6 +305,9 @@ class MapRunner
 
     std::vector<std::vector<std::string>> spill_files_;
     std::vector<std::string> shuffle_files_;
+
+    std::shared_ptr<Imagine_Rpc::Stub> heartbeat_stub_;
+    std::shared_ptr<Imagine_Rpc::Stub> complete_stub_;
 };
 
 } // namespace Imagine_MapReduce
