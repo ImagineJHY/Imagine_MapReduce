@@ -337,6 +337,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::sha
 {
     if (reader.use_count() == 1) {
         reader.reset();
+        stub->CloseConnection();
         stub.reset();
         LOG_INFO("This Mapper Task Over!");
         return;

@@ -111,7 +111,8 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 std::shared_ptr<Imagine_Rpc::Stub> complete_stub = runner->GetCompleteStub();
                 Internal::TaskCompleteRequestMessage complete_request_msg;
                 Internal::TaskCompleteResponseMessage complete_response_msg;
-                complete_stub->SetServiceName(INTERNAL_TASK_COMPLETE_SERVICE_NAME)->SetMethodName(INTERNAL_TASK_COMPLETE_METHOD_NAME)->SetServerIp(runner->GetMasterIp())->SetServerPort(runner->GetMasterPort())->SetSockfd(heartbeat_stub->GetSockfd());
+                complete_stub->SetServiceName(INTERNAL_TASK_COMPLETE_SERVICE_NAME)->SetMethodName(INTERNAL_TASK_COMPLETE_METHOD_NAME)->SetServerIp(runner->GetMasterIp())->SetServerPort(runner->GetMasterPort());
+                complete_stub->ConnectServer();
                 MapReduceUtil::GenerateTaskCompleteMessage(&complete_request_msg, Internal::Identity::Mapper, runner->GetFileName(), runner->GetId(), runner->GetSplitNum(), runner->GetMapperIp(), runner->GetMapperPort(), runner->GetShuffleFile());
                 LOG_INFO("Mapper Task Complete, split id is %d, msg size is %d", reader->GetSplitId(), complete_request_msg.ByteSize() + complete_response_msg.ByteSize());
                 complete_stub->CallConnectServer(&complete_request_msg, &complete_response_msg);
