@@ -100,14 +100,14 @@ void MapReduceMaster::InitLoop(YAML::Node config)
     rpc_server_->RegisterService(new Internal::HeartBeatService());
 }
 
-bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num, const size_t split_size)
+bool MapReduceMaster::MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num)
 {
     Internal::MapTaskRequestMessage request_msg;
     Internal::MapTaskResponseMessage response_msg;
     Imagine_Rpc::Stub* stub = GenerateNewStub();
     stub->SetServiceName(INTERNAL_MAP_TASK_SERVICE_NAME)->SetMethodName(INTERNAL_MAP_TASK_METHOD_NAME);
 
-    MapReduceUtil::GenerateMapTaskMessage(&request_msg, file_list[0], split_size, ip_, port_);
+    MapReduceUtil::GenerateMapTaskMessage(&request_msg, file_list[0], split_size_, ip_, port_);
 
     for (int i = 1; i <= reducer_num; i++) {
         ReducerNode *reducer_node = new ReducerNode;

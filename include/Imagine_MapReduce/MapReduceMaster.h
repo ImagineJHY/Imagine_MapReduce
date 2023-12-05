@@ -70,7 +70,7 @@ class MapReduceMaster
     void InitLoop(YAML::Node config);
 
     // 目前只支持单文件处理,因为要区分不同文件则不同Mapper应该对应在不同文件的机器
-    bool MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num = DEFAULT_REDUCER_NUM, const size_t split_size = DEFAULT_READ_SPLIT_SIZE);
+    bool MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num = DEFAULT_REDUCER_NUM);
 
     // 向Reducer发送一个预热信息,注册当前MapReduceMaster,并开启心跳
     bool StartReducer(const std::string &reducer_ip, const std::string &reducer_port);
