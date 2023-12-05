@@ -53,6 +53,7 @@ class Reducer
             for (int i = 0; i < merge_num; i++) {
                 std::string memory_key;
                 std::string memory_value;
+                idxs[i] = 0;
                 if (MapReduceUtil::ReadKVReaderFromMemory(merge_list[i], idxs[i], memory_key, memory_value))
                     heap.push(new KVReader(memory_key, memory_value, i));
             }
@@ -61,8 +62,9 @@ class Reducer
                 heap.pop();
                 std::string memory_key;
                 std::string memory_value;
-                if (MapReduceUtil::ReadKVReaderFromMemory(merge_list[next_kv->reader_idx_], idxs[next_kv->reader_idx_], memory_key, memory_value))
+                if (MapReduceUtil::ReadKVReaderFromMemory(merge_list[next_kv->reader_idx_], idxs[next_kv->reader_idx_], memory_key, memory_value)) {
                     heap.push(new KVReader(memory_key, memory_value, next_kv->reader_idx_));
+                }
                 MapReduceUtil::WriteKVReaderToDisk(fd, next_kv);
                 delete next_kv;
             }
@@ -75,7 +77,6 @@ class Reducer
             pthread_mutex_lock(disk_list_lock_);
             disk_file_list_.push_back(merge_name);
             pthread_mutex_unlock(disk_list_lock_);
-            sleep(30);
         }
 
         void DiskMerge()
