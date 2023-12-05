@@ -487,6 +487,7 @@ void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
                     master_node->MemoryMerge();
                 }
             }
+            LOG_INFO("Memory Merge Over! total size is %ld", master_node->memory_file_size_);
             master_node->MemoryMerge();
             master_node->memory_merge_.store(false);
 
