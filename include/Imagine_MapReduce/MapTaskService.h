@@ -96,7 +96,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 } else {
                     throw std::exception();
                 }
-                reader.SetTimerId(timerid);
+                reader->SetTimerId(timerid);
 
                 runner->StartSpillingThread();
                 sleep(1);
