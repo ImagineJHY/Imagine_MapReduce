@@ -75,6 +75,7 @@ class Reducer
             pthread_mutex_lock(disk_list_lock_);
             disk_file_list_.push_back(merge_name);
             pthread_mutex_unlock(disk_list_lock_);
+            sleep(30);
         }
 
         void DiskMerge()
