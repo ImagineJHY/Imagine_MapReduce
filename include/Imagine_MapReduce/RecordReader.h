@@ -3,6 +3,8 @@
 
 #include "InputSplit.h"
 
+#include <atomic>
+
 namespace Imagine_MapReduce
 {
 
@@ -47,11 +49,22 @@ class RecordReader
         return file_name_;
     }
 
+    void SetTimerId(long long timerid) { timerid_.store(timerid); }
+
+    long long GetTimerId() { return timerid_.load(); }
+
+    void SetServer(Imagine_Rpc::RpcServer* rpc_server) { rpc_server_ = rpc_server; }
+
+    Imagine_Rpc::RpcServer* GetServer() { return rpc_server_; }
+
  protected:
     const int split_id_;
     const std::string file_name_; // 输出文件名
 
     InputSplit *split_;
+
+    Imagine_Rpc::RpcServer *rpc_server_;
+    std::atomic<long long> timerid_;
 };
 
 } // namespace Imagine_MapReduce

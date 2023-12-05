@@ -96,6 +96,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 } else {
                     throw std::exception();
                 }
+                reader.SetTimerId(timerid);
 
                 runner->StartSpillingThread();
                 sleep(1);
@@ -106,7 +107,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 runner->CompleteMapping(); // buffer在spill线程中销毁
 
                 LOG_INFO("Remove Heartbeat Timer, timerid is %ld", timerid);
-                runner->GetRpcServer()->RemoveTimer(timerid);
+                // runner->GetRpcServer()->RemoveTimer(timerid);
 
                 std::shared_ptr<Imagine_Rpc::Stub> complete_stub = runner->GetCompleteStub();
                 Internal::TaskCompleteRequestMessage complete_request_msg;

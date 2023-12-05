@@ -220,7 +220,10 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
 template <typename reader_key, typename reader_value, typename key, typename value>
 std::shared_ptr<RecordReader<reader_key, reader_value>> Mapper<reader_key, reader_value, key, value>::GenerateRecordReader(InputSplit *split, int split_id)
 {
-    return record_reader_->CreateRecordReader(split, split_id);
+    std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_->CreateRecordReader(split, split_id);
+    new_record_reader->SetServer(rpc_server_);
+
+    return new_record_reader;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -337,6 +340,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::sha
 {
     LOG_INFO("Reader use count is %d", reader.use_count());
     if (reader.use_count() == 1) {
+        reader->GetServer()->RemoveTimer(reader->GetTimerId());
         reader.reset();
         stub->CloseConnection();
         stub.reset();
