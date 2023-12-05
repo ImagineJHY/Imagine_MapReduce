@@ -95,7 +95,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 LOG_INFO("111Mappper Task Start, split id is %d", reader->GetSplitId());
                 if (response_msg.status_() == Internal::Status::Ok) {
                     LOG_INFO("Before SetTimer RecordReader, use count is %d", reader.use_count());
-                    timerid = runner->GetRpcServer()->SetTimer(std::bind(runner->GetTimerCallback(), heartbeat_stub.get(), reader.get()), DEFAULT_HEARTBEAT_INTERVAL_TIME, DEFAULT_HEARTBEAT_DELAY_TIME);
+                    timerid = runner->GetRpcServer()->SetTimer(std::bind(runner->GetTimerCallback(), heartbeat_stub, reader), DEFAULT_HEARTBEAT_INTERVAL_TIME, DEFAULT_HEARTBEAT_DELAY_TIME);
                     LOG_INFO("After SetTimer RecordReader, use count is %d", reader.use_count());
                 } else {
                     throw std::exception();
