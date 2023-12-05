@@ -67,8 +67,10 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
     for (size_t i = 0; i < splits.size(); i++) {
         pthread_t* thread = new pthread_t;
         std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = mapper_->GenerateRecordReader(splits[i], i + 1);
+        LOG_INFO("Create RecordReader, use count is %d", new_record_reader.use_count());
         MapRunner<reader_key, reader_value, key, value> *runner = mapper_->GenerateMapRunner(i + 1, splits.size(), request_msg->file_name_(), request_msg->listen_ip_(), request_msg->listen_port_());
         runner->SetRecordReader(new_record_reader);
+        LOG_INFO("Runner Get RecordReader, use count is %d", new_record_reader.use_count());
         runner->SetTimerCallback(mapper_->GetTimerCallback());
         runner->SetThread(thread);
         runner->SetHeartBeatStub(mapper_->GenerateNewStub());
@@ -92,7 +94,9 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 heartbeat_stub->CallConnectServer(&heartbeat_request_msg, &response_msg);
                 LOG_INFO("111Mappper Task Start, split id is %d", reader->GetSplitId());
                 if (response_msg.status_() == Internal::Status::Ok) {
+                    LOG_INFO("Before SetTimer RecordReader, use count is %d", new_record_reader.use_count());
                     timerid = runner->GetRpcServer()->SetTimer(std::bind(runner->GetTimerCallback(), heartbeat_stub, reader), DEFAULT_HEARTBEAT_INTERVAL_TIME, DEFAULT_HEARTBEAT_DELAY_TIME);
+                    LOG_INFO("After SetTimer RecordReader, use count is %d", new_record_reader.use_count());
                 } else {
                     throw std::exception();
                 }
@@ -125,7 +129,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 }
 
                 delete runner;
-
+                LOG_INFO("Task Over RecordReader, use count is %d", new_record_reader.use_count());
                 return nullptr;
             },
             runner);
