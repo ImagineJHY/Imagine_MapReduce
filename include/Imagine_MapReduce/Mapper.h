@@ -335,6 +335,7 @@ void Mapper<reader_key, reader_value, key, value>::loop()
 template <typename reader_key, typename reader_value, typename key, typename value>
 void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub> stub, std::shared_ptr<RecordReader<reader_key, reader_value>> reader)
 {
+    LOG_INFO("Reader use count is %d", reader.use_count());
     if (reader.use_count() == 1) {
         reader.reset();
         stub->CloseConnection();
