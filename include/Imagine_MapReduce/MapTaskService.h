@@ -129,7 +129,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
                 }
 
                 delete runner;
-                LOG_INFO("Task Over RecordReader, use count is %d", reader.use_count());
+                LOG_INFO("Task Over RecordReader, use count is %d, split id is %d", reader.use_count(), reader->GetSplitId());
                 return nullptr;
             },
             runner);
