@@ -5,6 +5,7 @@ namespace Imagine_MapReduce
 
 bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int partition_idx)
 {
+    LOG_INFO("Write KV to Buffer, key is %s, value is %s", content.first, content.second);
     bool flag = true;
     int key_len = strlen(content.first);
     int value_len = strlen(content.second);
