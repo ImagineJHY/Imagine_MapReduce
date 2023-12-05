@@ -24,6 +24,7 @@ void HeartBeatService::Init()
 
 Imagine_Rpc::Status HeartBeatService::HeartBeatPacketProcessor(Imagine_Rpc::Context* context, HeartBeatRequestMessage* request_msg, HeartBeatResponseMessage* response_msg)
 {
+    LOG_INFO("Master Receive HeartBeat Packet!");
     if (request_msg->recv_identity_() != Identity::Master) {
         throw std::exception();
     }
