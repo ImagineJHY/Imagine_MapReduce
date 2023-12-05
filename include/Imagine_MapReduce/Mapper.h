@@ -344,6 +344,7 @@ void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::sha
     Internal::HeartBeatRequestMessage request_msg;
     Internal::HeartBeatResponseMessage response_msg;
     MapReduceUtil::GenerateHeartBeatProcessMessage(&request_msg, Internal::Identity::Mapper, reader->GetFileName(), reader->GetSplitId(), reader->GetProgress());
+    LOG_INFO("Task Progress Message is Sending!");
     stub->CallConnectServer(&request_msg, &response_msg);
 
     if (response_msg.status_() == Internal::Status::Ok) {
