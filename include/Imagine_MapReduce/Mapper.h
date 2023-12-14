@@ -150,7 +150,7 @@ void Mapper<reader_key, reader_value, key, value>::Init(const YAML::Node& config
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
+void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& config)
 {
     rpc_server_thread_ = new pthread_t;
     if (!rpc_server_thread_) {
