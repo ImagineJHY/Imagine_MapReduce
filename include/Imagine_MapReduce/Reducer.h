@@ -204,8 +204,8 @@ class Reducer
                 heap.pop();
                 std::string memory_key;
                 std::string memory_value;
-                if (MapReduceUtil::ReadKVReaderFromMemory(merge_list[next_kv->reader_idx_], idxs[next_kv->reader_idx_], memory_key, memory_value)) {
-                    heap.push(new KVReader(memory_key, memory_value, next_kv->reader_idx_));
+                if (MapReduceUtil::ReadKVReaderFromMemory(merge_list[next_kv->GetReaderIdx()], idxs[next_kv->GetReaderIdx()], memory_key, memory_value)) {
+                    heap.push(new KVReader(memory_key, memory_value, next_kv->GetReaderIdx()));
                 }
                 MapReduceUtil::WriteKVReaderToDisk(fd, next_kv);
                 delete next_kv;
