@@ -436,10 +436,11 @@ void Reducer<key, value>::ReceiveSplitFileData(const std::pair<std::string, std:
     pthread_mutex_lock(map_lock_);
     file_it->second.insert(std::make_pair(split_file_name, 1));
     if (file_it->second.size() == split_num) {
-        IMAGINE_MAPREDUCE_LOG("Enough!!!");
         master_node->ReceiveFullFile();
+        IMAGINE_MAPREDUCE_LOG("Enough!!!, %ld, %ld", master_node->ReceivedFileNum(), master_node->GetFileNum());
     }
 
+    
     if (master_node->ReceivedFileNum() == master_node->GetFileNum()) {
         // 所有文件接收完毕,可以开始执行
         IMAGINE_MAPREDUCE_LOG("Receive All Split File! Start Finally Merge!");
