@@ -4,6 +4,7 @@
 #include "KVBuffer.h"
 #include "Partitioner.h"
 #include "MapReduceUtil.h"
+#include "common_typename.h"
 
 #include <queue>
 #include <string.h>
