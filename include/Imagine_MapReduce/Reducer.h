@@ -96,7 +96,6 @@ class Reducer
             if (it == files_.end()) {
                 IMAGINE_MAPREDUCE_LOG("File name Error! Get File Name %s", file_name.c_str());
                 throw std::exception();
-                return nullptr;
             }
 
             return it;
