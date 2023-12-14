@@ -32,6 +32,12 @@ class MapRunner
         {
         }
 
+        int Getfd() const { return fd_; }
+
+        const std::string& GetKey() const { return spill_key_; }
+
+        const std::string& GetValue() const { return spill_value_; }
+
      private:
         std::string spill_key_;
         std::string spill_value_;
@@ -43,7 +49,7 @@ class MapRunner
      public:
         bool operator()(SpillReader *a, SpillReader *b)
         {
-            return strcmp(&a->spill_key_[0], &b->spill_key_[0]) < 0 ? true : false;
+            return strcmp(a->GetKey().c_str(), b->GetKey().c_str()) < 0 ? true : false;
         }
     };
 
@@ -396,13 +402,13 @@ MapRunner<reader_key, reader_value, key, value>* MapRunner<reader_key, reader_va
             heap.pop();
             std::string spill_key;
             std::string spill_value;
-            if (SpillRead(next->fd_, spill_key, spill_value)) {
-                heap.push(new SpillReader(spill_key, spill_value, next->fd_));
+            if (SpillRead(next->Getfd(), spill_key, spill_value)) {
+                heap.push(new SpillReader(spill_key, spill_value, next->Getfd()));
             }
-            write(shuffle_fd, &next->spill_key_[0], next->spill_key_.size());
+            write(shuffle_fd, next->GetKey().c_str(), next->GetKey().size());
             char c = ' ';
             write(shuffle_fd, &c, 1);
-            write(shuffle_fd, &next->spill_value_[0], next->spill_value_.size());
+            write(shuffle_fd, next->GetValue().c_str(), next->GetValue().size());
             char cc[] = "\r\n";
             write(shuffle_fd, cc, 2);
 
