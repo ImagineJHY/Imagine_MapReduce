@@ -436,6 +436,7 @@ void Reducer<key, value>::ReceiveSplitFileData(const std::pair<std::string, std:
     pthread_mutex_lock(map_lock_);
     file_it->second.insert(std::make_pair(split_file_name, 1));
     if (file_it->second.size() == split_num) {
+        IMAGINE_MAPREDUCE_LOG("Enough!!!");
         master_node->ReceiveFullFile();
     }
 

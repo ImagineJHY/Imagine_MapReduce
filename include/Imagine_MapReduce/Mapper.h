@@ -30,17 +30,17 @@ class Mapper
  public:
     Mapper();
 
-    Mapper(std::string profile_name);
+    Mapper(const std::string& profile_name);
 
-    Mapper(YAML::Node config);
+    Mapper(const YAML::Node& config);
 
     ~Mapper();
 
-    void Init(std::string profile_name);
+    void Init(const std::string& profile_name);
 
-    void Init(YAML::Node config);
+    void Init(const YAML::Node& config);
 
-    void InitLoop(YAML::Node config);
+    void InitLoop(const YAML::Node& config);
 
     void SetDefault();
 
@@ -95,13 +95,13 @@ Mapper<reader_key, reader_value, key, value>::Mapper()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name) : Mapper()
+Mapper<reader_key, reader_value, key, value>::Mapper(const std::string& profile_name) : Mapper()
 {
     Init(profile_name);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config) : Mapper()
+Mapper<reader_key, reader_value, key, value>::Mapper(const YAML::Node& config) : Mapper()
 {
     Init(config);
 }
@@ -119,7 +119,7 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name)
+void Mapper<reader_key, reader_value, key, value>::Init(const std::string& profile_name)
 {
     if (profile_name == "") {
         throw std::exception();
@@ -130,7 +130,7 @@ void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
+void Mapper<reader_key, reader_value, key, value>::Init(const YAML::Node& config)
 {
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
