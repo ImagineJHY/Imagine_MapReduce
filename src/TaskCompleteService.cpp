@@ -1,9 +1,7 @@
 #include "Imagine_MapReduce/TaskCompleteService.h"
 
-#include "Imagine_Rpc/Stub.h"
-#include "Imagine_Rpc/RpcMethodHandler.h"
+#include "Imagine_MapReduce/log_macro.h"
 #include "Imagine_MapReduce/MapReduceMaster.h"
-#include "Imagine_MapReduce/common_definition.h"
 #include "Imagine_MapReduce/TaskCompleteMessage.pb.h"
 
 namespace Imagine_MapReduce
@@ -55,7 +53,7 @@ Imagine_Rpc::Status TaskCompleteService::TaskCompleteProcessor(Imagine_Rpc::Cont
 
 Imagine_Rpc::Status TaskCompleteService::MapTaskCompleteProcessor(Imagine_Rpc::Context* context, TaskCompleteRequestMessage* request_msg, TaskCompleteResponseMessage* response_msg)
 {
-    LOG_INFO("Recv Map Task Finish Message! file %s split %d can Transport to Reducer!", request_msg->file_name_().c_str(), request_msg->split_id_());
+    IMAGINE_MAPREDUCE_LOG("Recv Map Task Finish Message! file %s split %d can Transport to Reducer!", request_msg->file_name_().c_str(), request_msg->split_id_());
 
     size_t reducer_num = master_->GetReducerNum();
 
@@ -69,30 +67,29 @@ Imagine_Rpc::Status TaskCompleteService::MapTaskCompleteProcessor(Imagine_Rpc::C
             throw std::exception();
         }
 
-        if (!(reducer_node->is_ready_.load())) {
+        if (!(reducer_node->IsReady())) {
             // reducer未就绪
-            pthread_mutex_lock(reducer_node->reducer_lock_);
-            if (!(reducer_node->is_ready_.load())) {
+            reducer_node->Lock();
+            if (!(reducer_node->IsReady())) {
                 // 再次确认
-                LOG_INFO("Searching Reducer!");
+                IMAGINE_MAPREDUCE_LOG("Searching Reducer!");
                 Imagine_Rpc::Stub* stub = master_->GenerateNewStub();
                 stub->SetServiceName(INTERNAL_START_REDUCE_SERVICE_NAME)->SetMethodName(INTERNAL_START_REDUCE_METHOD_NAME)->SearchNewServer();
-                LOG_INFO("GET REDUCER IP:%s, PORT:%s",stub->GetServerIp().c_str(), stub->GetServerPort().c_str());
+                IMAGINE_MAPREDUCE_LOG("GET REDUCER IP:%s, PORT:%s",stub->GetServerIp().c_str(), stub->GetServerPort().c_str());
                 master_->StartReducer(stub->GetServerIp(), stub->GetServerPort());                                           // 启动reducer与master的连接
                 reducer_node->SetStub(stub);
-                reducer_node->is_ready_.store(true);
-                pthread_mutex_unlock(reducer_node->reducer_lock_);
+                reducer_node->UpdateIsReadyStat(true);
+                reducer_node->UnLock();
             } else {
-                pthread_mutex_unlock(reducer_node->reducer_lock_);
+                reducer_node->UnLock();
             }
         }
-        master_->ConnReducer(request_msg->split_num_(), request_msg->file_name_(), split_file_name, request_msg->listen_ip_(), request_msg->listen_port_(), reducer_node->ip_, reducer_node->port_);
+        master_->ConnReducer(request_msg->split_num_(), request_msg->file_name_(), split_file_name, request_msg->listen_ip_(), request_msg->listen_port_(), reducer_node->GetIp(), reducer_node->GetPort());
     }
 }
 
 Imagine_Rpc::Status TaskCompleteService::ReduceTaskCompleteProcessor(Imagine_Rpc::Context* context, TaskCompleteRequestMessage* request_msg, TaskCompleteResponseMessage* response_msg)
 {
-
 }
 
 } // namespace Internal

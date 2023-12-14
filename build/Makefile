@@ -684,6 +684,33 @@ src/HeartBeatService.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/HeartBeatService.cpp.s
 .PHONY : src/HeartBeatService.cpp.s
 
+src/InputSplit.o: src/InputSplit.cpp.o
+
+.PHONY : src/InputSplit.o
+
+# target to build an object file
+src/InputSplit.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InputSplit.cpp.o
+.PHONY : src/InputSplit.cpp.o
+
+src/InputSplit.i: src/InputSplit.cpp.i
+
+.PHONY : src/InputSplit.i
+
+# target to preprocess a source file
+src/InputSplit.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InputSplit.cpp.i
+.PHONY : src/InputSplit.cpp.i
+
+src/InputSplit.s: src/InputSplit.cpp.s
+
+.PHONY : src/InputSplit.s
+
+# target to generate assembly for a file
+src/InputSplit.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/InputSplit.cpp.s
+.PHONY : src/InputSplit.cpp.s
+
 src/InternalType.pb.o: src/InternalType.pb.cc.o
 
 .PHONY : src/InternalType.pb.o
@@ -737,6 +764,33 @@ src/KVBuffer.s: src/KVBuffer.cpp.s
 src/KVBuffer.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/KVBuffer.cpp.s
 .PHONY : src/KVBuffer.cpp.s
+
+src/LineRecordReader.o: src/LineRecordReader.cpp.o
+
+.PHONY : src/LineRecordReader.o
+
+# target to build an object file
+src/LineRecordReader.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/LineRecordReader.cpp.o
+.PHONY : src/LineRecordReader.cpp.o
+
+src/LineRecordReader.i: src/LineRecordReader.cpp.i
+
+.PHONY : src/LineRecordReader.i
+
+# target to preprocess a source file
+src/LineRecordReader.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/LineRecordReader.cpp.i
+.PHONY : src/LineRecordReader.cpp.i
+
+src/LineRecordReader.s: src/LineRecordReader.cpp.s
+
+.PHONY : src/LineRecordReader.s
+
+# target to generate assembly for a file
+src/LineRecordReader.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/LineRecordReader.cpp.s
+.PHONY : src/LineRecordReader.cpp.s
 
 src/MapReduceMaster.o: src/MapReduceMaster.cpp.o
 
@@ -846,33 +900,6 @@ src/ReduceTaskMessage.pb.cc.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/ReduceTaskMessage.pb.cc.s
 .PHONY : src/ReduceTaskMessage.pb.cc.s
 
-src/Reducer.o: src/Reducer.cpp.o
-
-.PHONY : src/Reducer.o
-
-# target to build an object file
-src/Reducer.cpp.o:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/Reducer.cpp.o
-.PHONY : src/Reducer.cpp.o
-
-src/Reducer.i: src/Reducer.cpp.i
-
-.PHONY : src/Reducer.i
-
-# target to preprocess a source file
-src/Reducer.cpp.i:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/Reducer.cpp.i
-.PHONY : src/Reducer.cpp.i
-
-src/Reducer.s: src/Reducer.cpp.s
-
-.PHONY : src/Reducer.s
-
-# target to generate assembly for a file
-src/Reducer.cpp.s:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/Reducer.cpp.s
-.PHONY : src/Reducer.cpp.s
-
 src/RetrieveSplitFileMessage.pb.o: src/RetrieveSplitFileMessage.pb.cc.o
 
 .PHONY : src/RetrieveSplitFileMessage.pb.o
@@ -954,6 +981,33 @@ src/StartReduceMessage.pb.cc.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StartReduceMessage.pb.cc.s
 .PHONY : src/StartReduceMessage.pb.cc.s
 
+src/StringPartitioner.o: src/StringPartitioner.cpp.o
+
+.PHONY : src/StringPartitioner.o
+
+# target to build an object file
+src/StringPartitioner.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StringPartitioner.cpp.o
+.PHONY : src/StringPartitioner.cpp.o
+
+src/StringPartitioner.i: src/StringPartitioner.cpp.i
+
+.PHONY : src/StringPartitioner.i
+
+# target to preprocess a source file
+src/StringPartitioner.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StringPartitioner.cpp.i
+.PHONY : src/StringPartitioner.cpp.i
+
+src/StringPartitioner.s: src/StringPartitioner.cpp.s
+
+.PHONY : src/StringPartitioner.s
+
+# target to generate assembly for a file
+src/StringPartitioner.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/StringPartitioner.cpp.s
+.PHONY : src/StringPartitioner.cpp.s
+
 src/TaskCompleteMessage.pb.o: src/TaskCompleteMessage.pb.cc.o
 
 .PHONY : src/TaskCompleteMessage.pb.o
@@ -1008,32 +1062,32 @@ src/TaskCompleteService.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TaskCompleteService.cpp.s
 .PHONY : src/TaskCompleteService.cpp.s
 
-src/temp.o: src/temp.cpp.o
+src/TextOutputFormat.o: src/TextOutputFormat.cpp.o
 
-.PHONY : src/temp.o
+.PHONY : src/TextOutputFormat.o
 
 # target to build an object file
-src/temp.cpp.o:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.o
-.PHONY : src/temp.cpp.o
+src/TextOutputFormat.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TextOutputFormat.cpp.o
+.PHONY : src/TextOutputFormat.cpp.o
 
-src/temp.i: src/temp.cpp.i
+src/TextOutputFormat.i: src/TextOutputFormat.cpp.i
 
-.PHONY : src/temp.i
+.PHONY : src/TextOutputFormat.i
 
 # target to preprocess a source file
-src/temp.cpp.i:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.i
-.PHONY : src/temp.cpp.i
+src/TextOutputFormat.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TextOutputFormat.cpp.i
+.PHONY : src/TextOutputFormat.cpp.i
 
-src/temp.s: src/temp.cpp.s
+src/TextOutputFormat.s: src/TextOutputFormat.cpp.s
 
-.PHONY : src/temp.s
+.PHONY : src/TextOutputFormat.s
 
 # target to generate assembly for a file
-src/temp.cpp.s:
-	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.s
-.PHONY : src/temp.cpp.s
+src/TextOutputFormat.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TextOutputFormat.cpp.s
+.PHONY : src/TextOutputFormat.cpp.s
 
 # Help Target
 help:
@@ -1089,12 +1143,18 @@ help:
 	@echo "... src/HeartBeatService.o"
 	@echo "... src/HeartBeatService.i"
 	@echo "... src/HeartBeatService.s"
+	@echo "... src/InputSplit.o"
+	@echo "... src/InputSplit.i"
+	@echo "... src/InputSplit.s"
 	@echo "... src/InternalType.pb.o"
 	@echo "... src/InternalType.pb.i"
 	@echo "... src/InternalType.pb.s"
 	@echo "... src/KVBuffer.o"
 	@echo "... src/KVBuffer.i"
 	@echo "... src/KVBuffer.s"
+	@echo "... src/LineRecordReader.o"
+	@echo "... src/LineRecordReader.i"
+	@echo "... src/LineRecordReader.s"
 	@echo "... src/MapReduceMaster.o"
 	@echo "... src/MapReduceMaster.i"
 	@echo "... src/MapReduceMaster.s"
@@ -1107,9 +1167,6 @@ help:
 	@echo "... src/ReduceTaskMessage.pb.o"
 	@echo "... src/ReduceTaskMessage.pb.i"
 	@echo "... src/ReduceTaskMessage.pb.s"
-	@echo "... src/Reducer.o"
-	@echo "... src/Reducer.i"
-	@echo "... src/Reducer.s"
 	@echo "... src/RetrieveSplitFileMessage.pb.o"
 	@echo "... src/RetrieveSplitFileMessage.pb.i"
 	@echo "... src/RetrieveSplitFileMessage.pb.s"
@@ -1119,15 +1176,18 @@ help:
 	@echo "... src/StartReduceMessage.pb.o"
 	@echo "... src/StartReduceMessage.pb.i"
 	@echo "... src/StartReduceMessage.pb.s"
+	@echo "... src/StringPartitioner.o"
+	@echo "... src/StringPartitioner.i"
+	@echo "... src/StringPartitioner.s"
 	@echo "... src/TaskCompleteMessage.pb.o"
 	@echo "... src/TaskCompleteMessage.pb.i"
 	@echo "... src/TaskCompleteMessage.pb.s"
 	@echo "... src/TaskCompleteService.o"
 	@echo "... src/TaskCompleteService.i"
 	@echo "... src/TaskCompleteService.s"
-	@echo "... src/temp.o"
-	@echo "... src/temp.i"
-	@echo "... src/temp.s"
+	@echo "... src/TextOutputFormat.o"
+	@echo "... src/TextOutputFormat.i"
+	@echo "... src/TextOutputFormat.s"
 .PHONY : help
 
 

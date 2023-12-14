@@ -1,10 +1,13 @@
 #ifndef IMAGINE_MAPREDUCE_KVBUFFER_H
 #define IMAGINE_MAPREDUCE_KVBUFFER_H
 
-#include "MapReduceUtil.h"
-#include "common_definition.h"
+#include "common_macro.h"
 
+#include <queue>
+#include <string>
 #include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 namespace Imagine_MapReduce
 {
@@ -16,9 +19,13 @@ class KVBuffer
     {
      public:
         MetaIndex(int key_idx, int value_idx, int key_len, int value_len, int partition_idx, char *buffer, int border)
-            : key_idx_(key_idx), value_idx_(value_idx), key_len_(key_len), value_len_(value_len), partition_idx_(partition_idx), buffer_(buffer), border_(border) {}
+            : key_idx_(key_idx), value_idx_(value_idx), key_len_(key_len), value_len_(value_len), partition_idx_(partition_idx), buffer_(buffer), border_(border)
+        {
+        }
 
-        ~MetaIndex() {}
+        ~MetaIndex()
+        {
+        }
 
         char *GetKey(char *key) const
         {
@@ -78,8 +85,7 @@ class KVBuffer
             memcpy(&value_len, meta_info + sizeof(key_idx) + sizeof(value_idx), sizeof(value_len));
             int partition_idx;
             memcpy(&partition_idx, meta_info + sizeof(key_idx) + sizeof(value_idx) + sizeof(value_len), sizeof(partition_idx));
-            // printf("key idx is %d, value idx is %d\n",key_idx,value_idx);
-            // printf("key len is %d, value len is %d。。。。。。。。。。。。。。。。。\n",key_len,value_len);
+
             return MetaIndex(key_idx, value_idx, key_len, value_len, partition_idx, buffer, border);
         }
 
@@ -117,117 +123,43 @@ class KVBuffer
     };
 
  public:
-    KVBuffer(int partition_num, int split_id, std::vector<std::vector<std::string>> &spill_files)
-        : partition_num_(partition_num), split_id_(split_id), buffer_size_(DEFAULT_SPLIT_BUFFER_SIZE), spill_size_(DEFAULT_SPILL_SIZE), spill_files_(spill_files)
-    {
-        buffer_lock_ = new pthread_mutex_t;
-        if (pthread_mutex_init(buffer_lock_, nullptr) != 0) {
-            throw std::exception();
-        }
+    KVBuffer(int partition_num, int split_id, std::vector<std::vector<std::string>> &spill_files);
 
-        spill_lock_ = new pthread_mutex_t;
-        if (pthread_mutex_init(spill_lock_, nullptr) != 0) {
-            throw std::exception();
-        }
-
-        spill_cond_ = new pthread_cond_t;
-        if (pthread_cond_init(spill_cond_, nullptr) != 0) {
-            throw std::exception();
-        }
-
-        buffer_ = new char[buffer_size_];
-        // equator=kv_idx=kv_border=meta_border=0;
-        // meta_idx=buffer_size-1;
-        meta_idx_ = equator_ = kv_border_ = meta_border_ = 0;
-        kv_idx_ = 1;
-        is_spilling_ = false;
-
-        spill_id_ = 1;
-        spill_buffer_ = false;
-        quit_ = new bool(false);
-        first_spilling_ = false;
-        delete_this_ = false;
-
-        spill_files_.resize(partition_num_);
-    }
-
-    ~KVBuffer()
-    {
-        LOG_INFO("delete buffer");
-        delete[] buffer_;
-        delete buffer_lock_;
-        delete spill_lock_;
-        delete spill_cond_;
-    }
+    ~KVBuffer();
 
     bool WriteToBuffer(const std::pair<char *, char *> &content, int partition_idx);
 
     bool Spilling();
 
-    bool WriteJudgementWithSpilling(const std::pair<char *, char *> &content)
-    {
-        if (static_cast<size_t>(kv_idx_ <= kv_border_ ? kv_border_ - kv_idx_ : buffer_size_ - kv_idx_ + kv_border_) < strlen((char *)(content.first)) + strlen((char *)(content.second)) || 
-            (meta_border_ <= meta_idx_ ? meta_idx_ - meta_border_ : meta_idx_ + buffer_size_ - meta_border_) < DEFAULT_META_SIZE) {
-            return false;
-        }
+    bool WriteJudgementWithSpilling(const std::pair<char *, char *> &content) const;
 
-        return true;
-    }
+    bool WriteJudgementWithoutSpilling(const std::pair<char *, char *> &content) const;
 
-    bool WriteJudgementWithoutSpilling(const std::pair<char *, char *> &content)
-    {
-        if (static_cast<size_t>(meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) > strlen((char *)(content.first)) + strlen((char *)(content.second)) + DEFAULT_META_SIZE) {
-            return true;
-        }
+    bool SpillBuffer();
 
-        return false;
-    }
-
-    bool SpillBuffer()
-    {
-        spill_buffer_ = true;
-        while (!(*quit_)) {
-            // pthread_cond_signal(spill_cond);
-            pthread_cond_broadcast(spill_cond_);
-        }
-        delete quit_;
-        delete_this_ = true;
-
-        return true;
-    }
-
-    bool IsDeleteConditionSatisfy()
-    {
-        return delete_this_;
-    }
+    bool IsDeleteConditionSatisfy() const;
 
  private:
-    const int partition_num_;            // 分区数
-    const int split_id_;
-    int spill_id_;                       // 自增字段(第几次spilling)
-
-    char *buffer_;
-    const int buffer_size_;
-    int equator_;
-    int kv_idx_;                         // kv指针的位置
-    int meta_idx_;                       // 索引指针的位置
-    bool is_spilling_;                   // 是否在溢写
-    int kv_border_;                      // 溢写时的kv边界
-    int meta_border_;                    // 溢写时的索引边界
-
-    const double spill_size_;            // 设置发生spill空闲空间比
-
-    pthread_mutex_t *buffer_lock_;
-
-    pthread_cond_t *spill_cond_;
-    pthread_mutex_t *spill_lock_;
-
-    std::vector<std::vector<std::string>> &spill_files_;
-
-    bool spill_buffer_;
-    bool* quit_;
-    bool first_spilling_;
-    public: bool delete_this_;
+    const int partition_num_;                                   // 分区数
+    const int split_id_;                                        // splitId
+    int spill_id_;                                              // 自增字段(第几次spilling)
+    char *buffer_;                                              // 缓冲区
+    const int buffer_size_;                                     // 缓冲区大小
+    int equator_;                                               // 赤道位置
+    int kv_idx_;                                                // kv指针的位置
+    int meta_idx_;                                              // 索引指针的位置
+    bool is_spilling_;                                          // 是否在溢写
+    int kv_border_;                                             // 溢写时的kv边界
+    int meta_border_;                                           // 溢写时的索引边界
+    const double spill_size_;                                   // 设置发生spill空闲空间比
+    pthread_mutex_t *buffer_lock_;                              // 缓冲区的锁
+    pthread_cond_t *spill_cond_;                                // 溢写条件变量
+    pthread_mutex_t *spill_lock_;                               // 溢写条件变量的锁
+    std::vector<std::vector<std::string>> &spill_files_;        // spill的文件, 也是作为传出参数
+    bool spill_buffer_;                                         // 是否溢写的标识符
+    bool* quit_;                                                // 是否缓冲区全部数据处理完毕, 可以退出
+    bool first_spilling_;                                       // 是否触发过至少一次溢写
+    bool delete_this_;                                          // 标识缓冲区可以删除(已清空)
 };
 
 } // namespace Imagine_MapReduce

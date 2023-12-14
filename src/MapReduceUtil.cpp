@@ -1,15 +1,17 @@
 #include "Imagine_MapReduce/MapReduceUtil.h"
 
-#include "Imagine_MapReduce/TaskCompleteMessage.pb.h"
+#include "Imagine_MapReduce/log_macro.h"
+#include "Imagine_MapReduce/InputSplit.h"
 #include "Imagine_MapReduce/MapTaskMessage.pb.h"
 #include "Imagine_MapReduce/HeartBeatMessage.pb.h"
 #include "Imagine_MapReduce/ReduceTaskMessage.pb.h"
 #include "Imagine_MapReduce/StartReduceMessage.pb.h"
+#include "Imagine_MapReduce/TaskCompleteMessage.pb.h"
 #include "Imagine_MapReduce/RetrieveSplitFileMessage.pb.h"
 
+#include <vector>
 #include <fcntl.h>
 #include <unistd.h>
-#include <vector>
 #include <sys/stat.h>
 
 namespace Imagine_MapReduce
@@ -39,7 +41,7 @@ void MapReduceUtil::DefaultMapFunction(const std::string &read_split)
             int hash_fd = hash_func(temp_string) % 5;
             ssize_t ret = write(shuffle_fd[hash_fd], &temp_string[0], temp_string.size());
             if (ret < -10000) {
-                LOG_INFO("ret < -10000 hhhhh");
+                IMAGINE_MAPREDUCE_LOG("ret < -10000 hhhhh");
             }
             // printf("ret is %d\n",ret);
             write(shuffle_fd[hash_fd], "\r\n", 2);
@@ -152,10 +154,6 @@ std::vector<InputSplit *> MapReduceUtil::DefaultReadSplitFunction(const std::str
     if (statbuf.st_size) {
         splits.push_back(new InputSplit(file_name, offset, statbuf.st_size));
     }
-
-    // for(int i=0;i<splits.size();i++){
-    //     printf("%d\n",splits[i]->GetLength());
-    // }
 
     return splits;
 }
@@ -278,9 +276,9 @@ bool MapReduceUtil::WriteKVReaderToDisk(const int fd, const KVReader *const kv_r
 {
     char c = ' ';
     char cc[3] = "\r\n";
-    write(fd, &kv_reader->reader_key_[0], kv_reader->reader_key_.size());
+    write(fd, kv_reader->GetReaderKey().c_str(), kv_reader->GetReaderKey().size());
     write(fd, &c, 1);
-    write(fd, &kv_reader->reader_value_[0], kv_reader->reader_value_.size());
+    write(fd, kv_reader->GetReaderValue().c_str(), kv_reader->GetReaderValue().size());
     write(fd, cc, 2);
 
     return true;
@@ -302,8 +300,8 @@ bool MapReduceUtil::MergeKVReaderFromDisk(const int *const fds, const int fd_num
         heap.pop();
         std::string key;
         std::string value;
-        if (ReadKVReaderFromDisk(next->reader_idx_, key, value)) {
-            heap.push(new KVReader(key, value, next->reader_idx_));
+        if (ReadKVReaderFromDisk(next->GetReaderIdx(), key, value)) {
+            heap.push(new KVReader(key, value, next->GetReaderIdx()));
         }
         WriteKVReaderToDisk(fd, next);
 
@@ -358,7 +356,7 @@ void MapReduceUtil::GenerateHeartBeatProcessMessage(Internal::HeartBeatRequestMe
     request_msg->set_task_progress_(process);
 }
 
-void MapReduceUtil::GenerateTaskCompleteMessage(Internal::TaskCompleteRequestMessage* request_msg, Internal::Identity send_identity, const std::string& file_name, size_t split_id, size_t split_num, const std::string& listen_ip, const std::string& listen_port, std::vector<std::string> file_list)
+void MapReduceUtil::GenerateTaskCompleteMessage(Internal::TaskCompleteRequestMessage* request_msg, Internal::Identity send_identity, const std::string& file_name, size_t split_id, size_t split_num, const std::string& listen_ip, const std::string& listen_port, const std::vector<std::string>& file_list)
 {
     request_msg->set_send_identity_(send_identity);
     request_msg->set_recv_identity_(Internal::Identity::Master);
@@ -372,7 +370,7 @@ void MapReduceUtil::GenerateTaskCompleteMessage(Internal::TaskCompleteRequestMes
     }
 }
 
-void MapReduceUtil::GenerateStartReduceMessage(Internal::StartReduceRequestMessage* request_msg, const std::string& master_ip, const std::string& master_port, std::vector<std::string>& file_list)
+void MapReduceUtil::GenerateStartReduceMessage(Internal::StartReduceRequestMessage* request_msg, const std::string& master_ip, const std::string& master_port, const std::vector<std::string>& file_list)
 {
     request_msg->set_send_identity_(Internal::Identity::Master);
     request_msg->set_recv_identity_(Internal::Identity::Reducer);

@@ -1,24 +1,12 @@
 #ifndef IMAGINE_MAPREDUCE_MASTER_H
 #define IMAGINE_MAPREDUCE_MASTER_H
 
-#include "Imagine_Muduo/EventLoop.h"
-#include "Imagine_Rpc/RpcServer.h"
-#include "Imagine_Rpc/Stub.h"
-#include "common_definition.h"
+#include "common_macro.h"
+#include "common_typename.h"
+
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 #include <atomic>
-
-/*
-MapReduce通信格式
-    -第一个字段表示身份(Mapper、Reducer、MapReduceMaster)
-    -第二个字段表示消息类型
-        -start:任务开始
-        -process:任务进度
-        -finish:任务完成
-        -receive:收到信息
-        -sendfile:要求mapper将文件传输给reducer
-    -后面字段表示消息内容(任务进度信息或任务完成的地址或文件传输地址)
-*/
 
 namespace Imagine_MapReduce
 {
@@ -44,7 +32,41 @@ class MapReduceMaster
             return this;
         }
 
-     public:
+        ReducerNode* AddFile(const std::string& new_file)
+        {
+            files_.push_back(new_file);
+
+            return this;
+        }
+
+        bool IsReady() const { return is_ready_.load(); }
+
+        ReducerNode* UpdateIsReadyStat(bool flag)
+        {
+            is_ready_.store(flag);
+
+            return this;
+         }
+
+        std::string GetIp() const { return ip_; }
+
+        std::string GetPort() const { return port_; }
+
+        ReducerNode* Lock()
+        {
+            pthread_mutex_lock(reducer_lock_);
+
+            return this;
+        }
+
+        ReducerNode* UnLock()
+        {
+            pthread_mutex_unlock(reducer_lock_);
+
+            return this;
+        }
+
+     private:
         std::string ip_;
         std::string port_;
         std::vector<std::string> files_;
@@ -57,72 +79,53 @@ class MapReduceMaster
  public:
     MapReduceMaster();
 
-    MapReduceMaster(std::string profile_name);
+    MapReduceMaster(const std::string& profile_name);
 
-    MapReduceMaster(YAML::Node config);
+    MapReduceMaster(const YAML::Node& config);
 
     ~MapReduceMaster();
 
-    void Init(std::string profile_name);
+    void Init(const std::string& profile_name);
 
-    void Init(YAML::Node config);
+    void Init(const YAML::Node& config);
 
-    void InitLoop(YAML::Node config);
+    void InitLoop(const YAML::Node& config);
 
     // 目前只支持单文件处理,因为要区分不同文件则不同Mapper应该对应在不同文件的机器
-    bool MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num = DEFAULT_REDUCER_NUM);
+   MapReduceMaster* MapReduce(const std::vector<std::string> &file_list, const size_t reducer_num = DEFAULT_REDUCER_NUM);
 
     // 向Reducer发送一个预热信息,注册当前MapReduceMaster,并开启心跳
-    bool StartReducer(const std::string &reducer_ip, const std::string &reducer_port);
+    const MapReduceMaster* StartReducer(const std::string &reducer_ip, const std::string &reducer_port) const;
 
-    bool ConnMapper();
-
-    bool ConnReducer(size_t split_num, const std::string &file_name, const std::string &split_file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &reducer_ip, const std::string &reducer_port);
-
-    std::vector<std::string> MapReduceCenter(const std::vector<std::string> &message);
-
-    std::string ProcessReducerMessage(const std::vector<std::string> &message);
+    const MapReduceMaster* ConnReducer(size_t split_num, const std::string &file_name, const std::string &split_file_name, const std::string &mapper_ip, const std::string &mapper_port, const std::string &reducer_ip, const std::string &reducer_port) const;
 
     void loop();
 
     ReducerNode* FindReducerNode(int idx) const;
 
-    bool SetTaskFile(std::vector<std::string> &files);
+    MapReduceMaster* SetTaskFile(const std::vector<std::string> &files);
 
     size_t GetReducerNum() const;
 
     Imagine_Rpc::Stub* GenerateNewStub() const;
 
  private:
+    // 配置文件字段
     std::string ip_;
     std::string port_;
-    std::string zookeeper_ip_;
-    std::string zookeeper_port_;
     size_t reducer_num_;
     size_t split_size_;
     std::vector<std::string> file_list_;
-    size_t thread_num_;
-    std::string log_name_;
-    std::string log_path_;
-    size_t max_log_file_size_;
-    bool async_log_;
     bool singleton_log_mode_;
-    std::string log_title_;
-    bool log_with_timestamp_;
-
-    std::string profile_path_;
-    std::string rpc_profile_name_;
+    Logger* logger_;
 
  private:
     // 用于接收mapper和reducer的task进度信息
-    Imagine_Rpc::RpcServer *rpc_server_;
-    pthread_t *rpc_server_thread_;
-    Imagine_Tool::Logger* logger_;
-
+    Imagine_Rpc::RpcServer *rpc_server_;                    // Rpc服务器对象
+    pthread_t *rpc_server_thread_;                          // 开启Rpc服务主线程
     std::vector<std::string> files_;                        // 需要mapper处理的所有文件的文件名
-
     std::unordered_map<int, ReducerNode *> reducer_map_;    // reducer对应的ip和port信息
-    Imagine_Rpc::Stub* stub_;
+    Imagine_Rpc::Stub* stub_;                               // stub原型
 };
 
 } // namespace Imagine_MapReduce

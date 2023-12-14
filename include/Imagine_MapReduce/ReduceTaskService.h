@@ -1,9 +1,11 @@
 #ifndef IMAGINE_MAPREDUCE_REDUCETASKSERVICE_H
 #define IMAGINE_MAPREDUCE_REDUCETASKSERVICE_H
 
-#include "Imagine_Rpc/Service.h"
 #include "Reducer.h"
+#include "log_macro.h"
 #include "ReduceTaskMessage.pb.h"
+
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 namespace Imagine_MapReduce
 {
@@ -58,7 +60,7 @@ void ReduceTaskService<key, value>::Init()
 template <typename key, typename value>
 Imagine_Rpc::Status ReduceTaskService<key, value>::ReduceProcessor(Imagine_Rpc::Context* context, ReduceTaskRequestMessage* request_msg, ReduceTaskResponseMessage* response_msg)
 {
-    LOG_INFO("this is Reduce Method !");
+    IMAGINE_MAPREDUCE_LOG("this is Reduce Method !");
     std::pair<std::string, std::string> master_pair = std::make_pair(request_msg->master_ip_(), request_msg->master_port_());
     std::pair<std::string, std::string> mapper_pair = std::make_pair(request_msg->mapper_ip_(), request_msg->mapper_port_());
     reducer_->ReceiveSplitFileData(master_pair, mapper_pair, request_msg->file_name_(), request_msg->split_file_name_(), request_msg->split_num_());
