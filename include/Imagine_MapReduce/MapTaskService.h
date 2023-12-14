@@ -9,6 +9,9 @@
 namespace Imagine_MapReduce
 {
 
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>;
+
 namespace Internal
 {
 
