@@ -2,9 +2,12 @@
 #define IMAGINE_MAPREDUCE_MAPRUNNER_H
 
 #include "KVBuffer.h"
+#include "log_macro.h"
 #include "Partitioner.h"
 #include "MapReduceUtil.h"
 #include "common_typename.h"
+
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 #include <queue>
 #include <string.h>
