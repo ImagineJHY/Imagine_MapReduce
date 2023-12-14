@@ -38,6 +38,143 @@ class Reducer
         {
         }
 
+        MasterNode(const std::vector<std::string>& file_list) : count_(0), receive_all_(false), memory_merge_(true), disk_merge_(true), memory_file_size_(0)
+        {
+            file_num_ = file_list.size();
+            for (size_t i = 0; i < file_num_; i++) {
+                std::unordered_map<std::string, int> temp_map;
+                files_.insert(std::make_pair(file_list[i], temp_map));
+            }
+
+            memory_thread_ = new pthread_t;
+            disk_thread_ = new pthread_t;
+            memory_list_lock_ = new pthread_mutex_t;
+            disk_list_lock_ = new pthread_mutex_t;
+
+            if (pthread_mutex_init(memory_list_lock_, nullptr) != 0) {
+                throw std::exception();
+            }
+            if (pthread_mutex_init(disk_list_lock_, nullptr) != 0) {
+                throw std::exception();
+            }
+        }
+
+        MasterNode* AddFileToMemoryList(const std::string& file_content, const std::string& split_file_name = "")
+        {
+            pthread_mutex_lock(memory_list_lock_);
+            memory_file_list_.push_front(file_content);
+            memory_file_size_ += memory_file_list_.front().size();
+
+            if (memory_file_list_.begin()->size()) {
+                IMAGINE_MAPREDUCE_LOG("split file %s content : %s", split_file_name.c_str(), memory_file_list_.begin()->c_str());
+            } else {
+                IMAGINE_MAPREDUCE_LOG("split file %s content : NoContent!", split_file_name.c_str());
+            }
+            pthread_mutex_unlock(memory_list_lock_);
+
+            return this;
+        }
+
+        // 一个文件的split集齐
+        MasterNode* ReceiveFullFile()
+        {
+            count_++;
+
+            return this;
+        }
+
+        size_t ReceivedFileNum() const
+        {
+            return count_;
+        }
+
+        size_t GetFileNum() const { return file_num_; }
+
+        std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator FindFileIterator(const std::string& file_name)
+        {
+            auto it = files_.find(file_name);
+            if (it == files_.end()) {
+                IMAGINE_MAPREDUCE_LOG("File name Error! Get File Name %s", file_name.c_str());
+                throw std::exception();
+                return nullptr;
+            }
+
+            return it;
+        }
+
+        const MasterNode* LockMemoryList() const
+        {
+            pthread_mutex_lock(memory_list_lock_);
+
+            return this;
+        }
+
+        const MasterNode* UnLockMemoryList() const
+        {
+            pthread_mutex_unlock(memory_list_lock_);
+
+            return this;
+        }
+
+        const MasterNode* LockDiskList() const
+        {
+            pthread_mutex_lock(disk_list_lock_);
+
+            return this;
+        }
+
+        const MasterNode* UnLockDiskList() const
+        {
+            pthread_mutex_unlock(disk_list_lock_);
+
+            return this;
+        }
+
+        pthread_t* GetMemoryThreadPtr() const { return memory_thread_; }
+
+        pthread_t* GetDiskThreadPtr() const { return disk_thread_; }
+
+        bool IsReceiveAll() const
+        {
+            return receive_all_.load();
+        }
+
+        MasterNode* SetReceiveAllStat(bool flag)
+        {
+            receive_all_.store(flag);
+
+            return this;
+        }
+
+        size_t GetMemoryFileSize() const { return memory_file_size_.load(); }
+
+        bool GetMemoryMergeStat() const { return memory_merge_.load(); }
+
+        size_t GetDiskFileNum() const 
+        {
+            pthread_mutex_lock(disk_list_lock_);
+            size_t file_num = disk_file_list_.size();
+            pthread_mutex_unlock(disk_list_lock_);
+
+            return file_num;
+        }
+
+        MasterNode* SetMemoryMergeStat(bool flag)
+        {
+            memory_merge_.store(flag);
+
+            return this;
+        }
+
+        bool GetDiskMergeStat() const { return disk_merge_.load(); }
+
+        MasterNode* SetDiskMergeStat(bool flag)
+        {
+            disk_merge_.store(flag);
+
+            return this;
+        }
+
         void MemoryMerge()
         {
             pthread_mutex_lock(memory_list_lock_);
@@ -48,6 +185,7 @@ class Reducer
                 merge_list.push_back(std::move(*it));
             }
             memory_file_list_.clear();
+            memory_file_size_.store(0);
 
             std::string merge_name = "memory_merge_" + MapReduceUtil::IntToString(memory_merge_id_++) + ".txt";
             int fd = open(&merge_name[0], O_CREAT | O_RDWR, 0777);
@@ -114,8 +252,8 @@ class Reducer
         }
 
      private:
-        int count_;                                                                         // 计数,用于判断是否可以开始执行Reduce
-        int file_num_;                                                                      // master要处理的文件总数
+        size_t count_;                                                                      // 计数,用于判断是否可以开始执行Reduce
+        size_t file_num_;                                                                   // master要处理的文件总数
         std::unordered_map<std::string, std::unordered_map<std::string, int>> files_;       // 存储源文件名到splits的映射
         std::atomic<bool> receive_all_;                                                     // 标识所有文件是否全部接收完毕
         std::atomic<bool> memory_merge_;                                                    // 标识memory是否退出merge
@@ -126,7 +264,7 @@ class Reducer
         pthread_t *disk_thread_;                                                            // disk merge的线程
         pthread_mutex_t *memory_list_lock_;                                                 // memory_file_list_的锁
         pthread_mutex_t *disk_list_lock_;                                                   // disk_file_list_的锁
-        std::atomic<int> memory_file_size_;                                                 // 存储内存中储存的文件的总大小
+        std::atomic<size_t> memory_file_size_;                                              // 存储内存中储存的文件的总大小
         std::list<std::string> memory_file_list_;                                           // 存储split文件内容
         std::list<std::string> disk_file_list_;                                             // 存储磁盘中储存的文件的文件名
     };
@@ -254,22 +392,7 @@ Reducer<key, value>* Reducer<key, value>::RegisterMaster(std::pair<std::string, 
         // 重复注册
         throw std::exception();
     }
-    MasterNode *new_master = new MasterNode;
-    new_master->file_num_ = file_list.size();
-    for (int i = 0; i < file_list.size(); i++) {
-        std::unordered_map<std::string, int> temp_map;
-        new_master->files_.insert(std::make_pair(file_list[i], temp_map));
-    }
-    new_master->memory_thread_ = new pthread_t;
-    new_master->disk_thread_ = new pthread_t;
-    new_master->memory_list_lock_ = new pthread_mutex_t;
-    new_master->disk_list_lock_ = new pthread_mutex_t;
-    if (pthread_mutex_init(new_master->memory_list_lock_, nullptr) != 0) {
-        throw std::exception();
-    }
-    if (pthread_mutex_init(new_master->disk_list_lock_, nullptr) != 0) {
-        throw std::exception();
-    }
+    MasterNode *new_master = new MasterNode(file_list);
 
     StartMergeThread(new_master); // 开启merge线程
 
@@ -290,12 +413,7 @@ void Reducer<key, value>::ReceiveSplitFileData(const std::pair<std::string, std:
         throw std::exception();
     }
     MasterNode *master_node = master_it->second;
-    std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator file_it = master_node->files_.find(file_name); // 找到对应的file
-    if (file_it == master_it->second->files_.end()) {
-        // 错误的文件名
-        IMAGINE_MAPREDUCE_LOG("File name Error! Get File Name %s", file_name.c_str());
-        throw std::exception();
-    }
+    std::unordered_map<std::string, std::unordered_map<std::string, int>>::iterator file_it = master_node->FindFileIterator(file_name); // 找到对应的file
     std::unordered_map<std::string, int>::iterator split_it = file_it->second.find(split_file_name);
     if (split_it != file_it->second.end()) {
         // 重复接收同一个split文件
@@ -314,35 +432,19 @@ void Reducer<key, value>::ReceiveSplitFileData(const std::pair<std::string, std:
 
     delete stub;
 
-    pthread_mutex_lock(master_node->memory_list_lock_);
-    master_node->memory_file_list_.push_front(response_msg.split_file_content_());
-    if ((*master_node->memory_file_list_.begin()).size()) {
-        IMAGINE_MAPREDUCE_LOG("split file %s content : %s", &split_file_name[0], &(*master_node->memory_file_list_.begin())[0]);
-    } else {
-        IMAGINE_MAPREDUCE_LOG("split file %s content : NoContent!", &split_file_name[0]);
-    }
-    master_node->memory_file_size_ += master_node->memory_file_list_.front().size();
-    pthread_mutex_unlock(master_node->memory_list_lock_);
+    master_node->AddFileToMemoryList(response_msg.split_file_content_(), split_file_name);
 
     pthread_mutex_lock(map_lock_);
-    split_it = file_it->second.find(split_file_name);
-    if (split_it != file_it->second.end()) {
-        // 重复接收同一个split文件
-        IMAGINE_MAPREDUCE_LOG("Repeat Retrieve Split File Error! Get Split File Name %s", split_file_name.c_str());
-        throw std::exception();
-    }
     file_it->second.insert(std::make_pair(split_file_name, 1));
-    master_it = master_map_.find(master_pair);
-    file_it = master_it->second->files_.find(file_name);
     if (file_it->second.size() == split_num) {
-        master_it->second->count_++;
+        master_node->ReceiveFullFile();
     }
 
-    if (static_cast<size_t>(master_it->second->count_) == master_it->second->files_.size()) {
+    if (master_node->ReceivedFileNum() == master_node->GetFileNum()) {
         // 所有文件接收完毕,可以开始执行
         IMAGINE_MAPREDUCE_LOG("Receive All Split File! Start Finally Merge!");
-        master_node->receive_all_.store(true);
-        while (master_node->disk_merge_.load());
+        master_node->SetReceiveAllStat(true);
+        while (master_node->GetDiskMergeStat());
         IMAGINE_MAPREDUCE_LOG("TaskOver!");
     }
     pthread_mutex_unlock(map_lock_);
@@ -353,41 +455,41 @@ void Reducer<key, value>::StartMergeThread(MasterNode *master_node)
 {
     // 此函数调用时机在Register的map_lock中,故不需要加锁
     pthread_create(
-        master_node->memory_thread_, nullptr, [](void *argv) -> void *
+        master_node->GetMemoryThreadPtr(), nullptr, [](void *argv) -> void *
         {
             MasterNode* master_node = (MasterNode*)argv;
-            while (!(master_node->receive_all_.load())) {
-                if (master_node->memory_file_size_ >= DEFAULT_MEMORY_MERGE_SIZE) {
+            while (!(master_node->IsReceiveAll())) {
+                if (master_node->GetMemoryFileSize() >= DEFAULT_MEMORY_MERGE_SIZE) {
                     master_node->MemoryMerge();
                 }
             }
-            IMAGINE_MAPREDUCE_LOG("Memory Merge Over! total size is %ld", master_node->memory_file_size_.load());
+            IMAGINE_MAPREDUCE_LOG("Memory Merge Over! total size is %ld", master_node->GetMemoryFileSize());
             master_node->MemoryMerge();
-            master_node->memory_merge_.store(false);
+            master_node->SetMemoryMergeStat(false);
 
             return nullptr; 
         },
         master_node);
 
-    pthread_detach(*(master_node->memory_thread_));
+    pthread_detach(*(master_node->GetMemoryThreadPtr()));
 
     pthread_create(
-        master_node->disk_thread_, nullptr, [](void *argv) -> void *
+        master_node->GetDiskThreadPtr(), nullptr, [](void *argv) -> void *
         {
 
             MasterNode* master_node = (MasterNode*)argv;
-            while (master_node->memory_merge_.load()) {
-                if (master_node->disk_file_list_.size() >= DEFAULT_DISK_MERGE_NUM) {
+            while (master_node->GetMemoryMergeStat()) {
+                if (master_node->GetDiskFileNum() >= DEFAULT_DISK_MERGE_NUM) {
                     master_node->DiskMerge();
                 }
             }
             master_node->DiskMerge();
-            master_node->disk_merge_.store(false);
+            master_node->SetDiskMergeStat(false);
 
             return nullptr; 
         },
         master_node);
-    pthread_detach(*(master_node->disk_thread_));
+    pthread_detach(*(master_node->GetDiskThreadPtr()));
 }
 
 template <typename key, typename value>
