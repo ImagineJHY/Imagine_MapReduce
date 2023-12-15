@@ -32,9 +32,11 @@ class MapReduceMaster
             return this;
         }
 
-        ReducerNode* AddFile(const std::string& new_file)
+        ReducerNode* AddFiles(const std::vector<std::string>& files)
         {
-            files_.push_back(new_file);
+            for (size_t i = 0; i < files.size(); i++) {
+                files_.push_back(files[i]);
+            }
 
             return this;
         }

@@ -98,10 +98,14 @@ MapReduceMaster* MapReduceMaster::MapReduce(const std::vector<std::string> &file
 
     MapReduceUtil::GenerateMapTaskMessage(&request_msg, file_list[0], split_size_, ip_, port_);
 
+    for (size_t i = 0; i < file_list.size(); i++) {
+        files_.push_back(file_list[i]);
+    }
+    
+
     for (int i = 1; i <= reducer_num; i++) {
         ReducerNode *reducer_node = new ReducerNode;
-        files_.push_back(file_list[0]);
-        reducer_node->AddFile(file_list[0]);
+        reducer_node->AddFiles(files_);
         reducer_map_.insert(std::make_pair(i, reducer_node));
     }
 
