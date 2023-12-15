@@ -64,6 +64,7 @@ Imagine_Rpc::Status StartReduceService<key, value>::StartReduceProcessor(Imagine
     std::pair<std::string, std::string> new_master_pair = std::make_pair(request_msg->listen_ip_(), request_msg->listen_port_());
     std::vector<std::string> file_list;
     for (size_t i = 0; i < request_msg->file_list_().size(); i++) {
+        IMAGINE_MAPREDUCE_LOG("%s", request_msg->file_list_(i).c_str());
         file_list.push_back(request_msg->file_list_(i));
     }
     reducer_->RegisterMaster(new_master_pair, file_list);
@@ -73,6 +74,7 @@ Imagine_Rpc::Status StartReduceService<key, value>::StartReduceProcessor(Imagine
 }
 
 } // namespace Internal
+
 } // namespace Imagine_MapReduce
 
 
