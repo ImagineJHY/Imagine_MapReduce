@@ -1,9 +1,11 @@
 #ifndef IMAGINE_MAPREDUCE_STARTREDUCESERVICE_H
 #define IMAGINE_MAPREDUCE_STARTREDUCESERVICE_H
 
-#include "Imagine_Rpc/Service.h"
 #include "Reducer.h"
+#include "log_macro.h"
 #include "StartReduceMessage.pb.h"
+
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 namespace Imagine_MapReduce
 {
@@ -58,19 +60,21 @@ void StartReduceService<key, value>::Init()
 template <typename key, typename value>
 Imagine_Rpc::Status StartReduceService<key, value>::StartReduceProcessor(Imagine_Rpc::Context* context, StartReduceRequestMessage* request_msg, StartReduceResponseMessage* response_msg)
 {
-    LOG_INFO("This is Start Reduce Method !");
+    IMAGINE_MAPREDUCE_LOG("This is Start Reduce Method !");
     std::pair<std::string, std::string> new_master_pair = std::make_pair(request_msg->listen_ip_(), request_msg->listen_port_());
     std::vector<std::string> file_list;
     for (size_t i = 0; i < request_msg->file_list_().size(); i++) {
+        IMAGINE_MAPREDUCE_LOG("%s", request_msg->file_list_(i).c_str());
         file_list.push_back(request_msg->file_list_(i));
     }
-    reducer_->RegisterMaster(new_master_pair, file_list);LOG_INFO("HEREDDDDDDD");
-    response_msg->set_status_(Internal::Status::Ok);LOG_INFO("HEREDDDDDDD");
+    reducer_->RegisterMaster(new_master_pair, file_list);
+    response_msg->set_status_(Internal::Status::Ok);
 
     return Imagine_Rpc::Status::OK;
 }
 
 } // namespace Internal
+
 } // namespace Imagine_MapReduce
 
 

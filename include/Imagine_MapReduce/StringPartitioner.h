@@ -12,15 +12,11 @@ namespace Imagine_MapReduce
 class StringPartitioner : public Partitioner<std::string>
 {
  public:
-    StringPartitioner(int partition_num = DEFAULT_PARTITION_NUM) : Partitioner(partition_num) {}
+    StringPartitioner(int partition_num = DEFAULT_PARTITION_NUM);
 
-    ~StringPartitioner() {}
+    ~StringPartitioner();
 
-    int Partition(std::string key)
-    {
-        std::unordered_set<std::string> set;
-        return ((set.hash_function()(key)) % partition_num_) + 1;
-    }
+    int Partition(const std::string& key) const;
 };
 
 } // namespace Imagine_MapReduce

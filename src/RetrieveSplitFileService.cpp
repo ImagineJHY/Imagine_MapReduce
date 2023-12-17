@@ -1,6 +1,7 @@
 #include "Imagine_MapReduce/RetrieveSplitFileService.h"
 
-#include "Imagine_MapReduce/common_definition.h"
+#include "Imagine_MapReduce/log_macro.h"
+#include "Imagine_MapReduce/common_macro.h"
 #include "Imagine_MapReduce/RetrieveSplitFileMessage.pb.h"
 
 namespace Imagine_MapReduce
@@ -26,7 +27,7 @@ void RetrieveSplitFileService::Init()
 Imagine_Rpc::Status RetrieveSplitFileService::RetrieveSplitFileProcessor(Imagine_Rpc::Context* context, RetrieveSplitFileRequestMessage* request_msg, RetrieveSplitFileResponseMessage* response_msg)
 {
     std::string content;
-    LOG_INFO("Retrieve file %s", request_msg->split_file_name_().c_str());
+    IMAGINE_MAPREDUCE_LOG("Retrieve file %s", request_msg->split_file_name_().c_str());
     int fd = open(request_msg->split_file_name_().c_str(), O_RDWR);
     while (1) {
         char buffer[1024];

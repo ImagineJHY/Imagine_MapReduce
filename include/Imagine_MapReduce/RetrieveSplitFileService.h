@@ -1,7 +1,9 @@
 #ifndef IMAGINE_MAPREDUCE_RETRIEVE_SPLIT_FILE_SERVICE_H
 #define IMAGINE_MAPREDUCE_RETRIEVE_SPLIT_FILE_SERVICE_H
 
-#include "Imagine_Rpc/Service.h"
+#include "Imagine_Rpc/Imagine_Rpc.h"
+
+#include <fcntl.h>
 
 namespace Imagine_MapReduce
 {

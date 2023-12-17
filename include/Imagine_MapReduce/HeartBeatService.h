@@ -1,10 +1,11 @@
 #ifndef IMAGINE_MAPREDUCE_HEARTBEAT_SERVICE_H
 #define IMAGINE_MAPREDUCE_HEARTBEAT_SERVICE_H
 
-#include "Imagine_Rpc/Service.h"
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 namespace Imagine_MapReduce
 {
+
 namespace Internal
 {
 
@@ -28,6 +29,7 @@ class HeartBeatService : public Imagine_Rpc::Service
 };  
 
 } // namespace Internal
+
 } // namespace Imagine_MapReduce
 
 #endif

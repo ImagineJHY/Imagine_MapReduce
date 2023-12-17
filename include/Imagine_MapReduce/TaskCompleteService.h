@@ -1,7 +1,7 @@
 #ifndef IMAGINE_MAPREDUCE_TASKCOMPLETESERVICE_H
 #define IMAGINE_MAPREDUCE_TASKCOMPLETESERVICE_H
 
-#include "Imagine_Rpc/Service.h"
+#include "Imagine_Rpc/Imagine_Rpc.h"
 
 namespace Imagine_MapReduce
 {
@@ -37,6 +37,7 @@ class TaskCompleteService : public Imagine_Rpc::Service
 
 
 } // namespace Internal
+
 } // namespace Imagine_MapReduce
 
 

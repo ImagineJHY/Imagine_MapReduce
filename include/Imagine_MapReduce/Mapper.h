@@ -1,18 +1,12 @@
 #ifndef IMAGINE_MAPREDUCE_MAPPER_H
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
-#include "Imagine_Rpc/RpcServer.h"
-#include "Imagine_Rpc/RpcClient.h"
-#include "MapReduceUtil.h"
-#include "RecordReader.h"
-#include "LineRecordReader.h"
 #include "MapRunner.h"
-#include "OutputFormat.h"
-#include "TextOutputFormat.h"
-#include "common_definition.h"
-#include "Partitioner.h"
-#include "StringPartitioner.h"
+#include "MapReduceUtil.h"
 #include "MapTaskService.h"
+#include "LineRecordReader.h"
+#include "TextOutputFormat.h"
+#include "StringPartitioner.h"
 #include "HeartBeatMessage.pb.h"
 #include "RetrieveSplitFileService.h"
 
@@ -36,84 +30,62 @@ class Mapper
  public:
     Mapper();
 
-    Mapper(std::string profile_name);
+    Mapper(const std::string& profile_name);
 
-    Mapper(YAML::Node config);
+    Mapper(const YAML::Node& config);
 
     ~Mapper();
 
-    void Init(std::string profile_name);
+    void Init(const std::string& profile_name);
 
-    void Init(YAML::Node config);
+    void Init(const YAML::Node& config);
 
-    void InitLoop(YAML::Node config);
+    void InitLoop(const YAML::Node& config);
 
     void SetDefault();
 
-    // Rpc通信调用
-    std::vector<std::string> Map(const std::vector<std::string> &input);
+    std::vector<std::string> GetFile(const std::vector<std::string> &input) const;
 
-    std::vector<std::string> GetFile(const std::vector<std::string> &input);
+    std::shared_ptr<RecordReader<reader_key, reader_value>> GenerateRecordReader(InputSplit *split, int split_id) const;
 
-    std::shared_ptr<RecordReader<reader_key, reader_value>> GenerateRecordReader(InputSplit *split, int split_id);
+    MapRunner<reader_key, reader_value, key, value>* GenerateMapRunner(int split_id, int split_num, const std::string& file_name, const std::string &master_ip, const std::string &master_port) const;
 
-    MapRunner<reader_key, reader_value, key, value>* GenerateMapRunner(int split_id, int split_num, const std::string file_name, const std::string &master_ip, const std::string &master_port);
+    Imagine_Rpc::Stub* GenerateNewStub() const;
 
-    Imagine_Rpc::Stub* GenerateNewStub();
+    MapTimerCallback<reader_key, reader_value> GetTimerCallback() const;
 
-    MAPTIMER GetTimerCallback();
+    Mapper<reader_key, reader_value, key, value>* SetDefaultRecordReader();
 
-    bool SetDefaultRecordReader();
+    Mapper<reader_key, reader_value, key, value>* SetDefaultMapFunction();
 
-    bool SetDefaultMapFunction();
+    Mapper<reader_key, reader_value, key, value>* SetDefaultTimerCallback();
 
-    bool SetDefaultTimerCallback();
+    Mapper<reader_key, reader_value, key, value>* SetDefaultOutputFormat();
 
-    bool SetDefaultOutputFormat();
+    Mapper<reader_key, reader_value, key, value>* SetDefaultPartitioner();
 
-    bool SetDefaultPartitioner();
-
-    static void DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub> stub, std::shared_ptr<RecordReader<reader_key, reader_value>> reader);
+    // Mapper定时进行任务进度汇报
+    static void DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub>& stub, std::shared_ptr<RecordReader<reader_key, reader_value>>& reader);
 
     void loop();
 
   private:
+    // 配置文件字段
     std::string ip_;
     std::string port_;
-    std::string zookeeper_ip_;
-    std::string zookeeper_port_;
-    // size_t reducer_num_;
-    // size_t split_size_;
-    size_t thread_num_;
-    std::string log_name_;
-    std::string log_path_;
-    size_t max_log_file_size_;
-    bool async_log_;
     bool singleton_log_mode_;
-    std::string log_title_;
-    bool log_with_timestamp_;
 
-    std::string profile_path_;
-    std::string rpc_profile_name_;
+    Logger* logger_;
 
  private:
-    MAP map_;                                                           // 提供给用户自定义的map函数
-    MAPTIMER timer_callback_;
-
-    // MapReduceUtil::RecordReader record_reader;                       // 提供给用户自定义的recordread函数
-    RecordReader<reader_key, reader_value> *record_reader_;       // split迭代器类型
-    OutputFormat<key, value> *output_format_;
-    std::vector<InputSplit *> splits_;
-
-    pthread_t *map_threads_;
-
-    Imagine_Rpc::RpcServer *rpc_server_;
-    pthread_t *rpc_server_thread_;
-    Imagine_Tool::Logger* logger_;
-
-    Partitioner<key> *partitioner_;
-
-    Imagine_Rpc::Stub* stub_;
+    MapCallback<reader_key, reader_value, key, value> map_;             // 提供给用户自定义的map函数
+    MapTimerCallback<reader_key, reader_value> timer_callback_;         // 默认注册DefaultTimerCallback, 定时向Master发送任务进度
+    RecordReader<reader_key, reader_value> *record_reader_;             // split迭代器类型
+    OutputFormat<key, value> *output_format_;                           // 输出类型
+    Imagine_Rpc::RpcServer *rpc_server_;                                // rpc服务器对象
+    pthread_t *rpc_server_thread_;                                      // 用于开启RPC服务的主线程
+    Partitioner<key> *partitioner_;                                     // partition对象类型
+    Imagine_Rpc::Stub* stub_;                                           // stub原型
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -123,13 +95,13 @@ Mapper<reader_key, reader_value, key, value>::Mapper()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(std::string profile_name) : Mapper()
+Mapper<reader_key, reader_value, key, value>::Mapper(const std::string& profile_name) : Mapper()
 {
     Init(profile_name);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>::Mapper(YAML::Node config) : Mapper()
+Mapper<reader_key, reader_value, key, value>::Mapper(const YAML::Node& config) : Mapper()
 {
     Init(config);
 }
@@ -139,15 +111,15 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
 {
     delete rpc_server_;
     delete rpc_server_thread_;
-    delete[] map_threads_;
 
     delete record_reader_;
     delete output_format_;
     delete partitioner_;
+    delete stub_;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name)
+void Mapper<reader_key, reader_value, key, value>::Init(const std::string& profile_name)
 {
     if (profile_name == "") {
         throw std::exception();
@@ -158,28 +130,17 @@ void Mapper<reader_key, reader_value, key, value>::Init(std::string profile_name
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
+void Mapper<reader_key, reader_value, key, value>::Init(const YAML::Node& config)
 {
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
-    zookeeper_ip_ = config["zookeeper_ip"].as<std::string>();
-    zookeeper_port_ = config["zookeeper_port"].as<std::string>();
-    // reducer_num_ = config["reducer_num"].as<size_t>();
-    // split_size_ = config["split_size"].as<size_t>();
-    thread_num_ = config["thread_num"].as<size_t>();
-    log_name_ = config["log_name"].as<std::string>();
-    log_path_ = config["log_path"].as<std::string>();
-    max_log_file_size_ = config["max_log_file_size"].as<size_t>();
-    async_log_ = config["async_log"].as<bool>();
     singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
-    log_title_ = config["log_title"].as<std::string>();
-    log_with_timestamp_ = config["log_with_timestamp"].as<bool>();
 
     if (singleton_log_mode_) {
-        logger_ = Imagine_Tool::SingletonLogger::GetInstance();
+        logger_ = SingletonLogger::GetInstance();
     } else {
-        logger_ = new Imagine_Tool::NonSingletonLogger();
-        Imagine_Tool::Logger::SetInstance(logger_);
+        logger_ = new NonSingletonLogger();
+        Logger::SetInstance(logger_);
     }
 
     logger_->Init(config);
@@ -189,7 +150,7 @@ void Mapper<reader_key, reader_value, key, value>::Init(YAML::Node config)
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
+void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& config)
 {
     rpc_server_thread_ = new pthread_t;
     if (!rpc_server_thread_) {
@@ -197,7 +158,7 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
     }
 
     if (record_reader_ == nullptr) {
-        record_reader_ = new LineRecordReader();
+        SetDefaultRecordReader();
     }
     if (map_ == nullptr) {
         SetDefaultMapFunction();
@@ -218,25 +179,28 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(YAML::Node config)
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-std::shared_ptr<RecordReader<reader_key, reader_value>> Mapper<reader_key, reader_value, key, value>::GenerateRecordReader(InputSplit *split, int split_id)
+std::shared_ptr<RecordReader<reader_key, reader_value>> Mapper<reader_key, reader_value, key, value>::GenerateRecordReader(InputSplit *split, int split_id) const
 {
-    return record_reader_->CreateRecordReader(split, split_id);
+    std::shared_ptr<RecordReader<reader_key, reader_value>> new_record_reader = record_reader_->CreateRecordReader(split, split_id);
+    new_record_reader->SetServer(rpc_server_);
+
+    return new_record_reader;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-MapRunner<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::GenerateMapRunner(int split_id, int split_num, const std::string file_name, const std::string &master_ip, const std::string &master_port)
+MapRunner<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::GenerateMapRunner(int split_id, int split_num, const std::string& file_name, const std::string &master_ip, const std::string &master_port) const
 {
     return new MapRunner<reader_key, reader_value, key, value>(split_id, split_num, file_name, ip_, port_, master_ip, master_port, map_, partitioner_, output_format_, rpc_server_);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Imagine_Rpc::Stub* Mapper<reader_key, reader_value, key, value>::GenerateNewStub()
+Imagine_Rpc::Stub* Mapper<reader_key, reader_value, key, value>::GenerateNewStub() const
 {
     return new Imagine_Rpc::Stub(*stub_);
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-MAPTIMER Mapper<reader_key, reader_value, key, value>::GetTimerCallback()
+MapTimerCallback<reader_key, reader_value> Mapper<reader_key, reader_value, key, value>::GetTimerCallback() const
 {
     return timer_callback_;
 }
@@ -251,11 +215,11 @@ void Mapper<reader_key, reader_value, key, value>::SetDefault()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(const std::vector<std::string> &input)
+std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(const std::vector<std::string> &input) const
 {
     std::vector<std::string> output;
     std::string content;
-    LOG_INFO("get file %s", &input[0][0]);
+    IMAGINE_MAPREDUCE_LOG("get file %s", &input[0][0]);
     int fd = open(&input[0][0], O_RDWR);
     while (1) {
         char buffer[1024];
@@ -276,45 +240,45 @@ std::vector<std::string> Mapper<reader_key, reader_value, key, value>::GetFile(c
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-bool Mapper<reader_key, reader_value, key, value>::SetDefaultRecordReader()
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::SetDefaultRecordReader()
 {
     record_reader_ = new LineRecordReader();
-    return true;
+
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-bool Mapper<reader_key, reader_value, key, value>::SetDefaultMapFunction()
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::SetDefaultMapFunction()
 {
-    // map=DefaultMapFunction;
     map_ = [](int offset, const std::string &line_text) -> std::pair<std::string, int>
     {
         return std::make_pair(line_text, 1);
     };
 
-    return true;
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-bool Mapper<reader_key, reader_value, key, value>::SetDefaultTimerCallback()
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::SetDefaultTimerCallback()
 {
     timer_callback_ = DefaultTimerCallback;
-    return true;
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-bool Mapper<reader_key, reader_value, key, value>::SetDefaultPartitioner()
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::SetDefaultPartitioner()
 {
     partitioner_ = new StringPartitioner();
 
-    return true;
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-bool Mapper<reader_key, reader_value, key, value>::SetDefaultOutputFormat()
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::SetDefaultOutputFormat()
 {
     output_format_ = new TextOutputFormat();
 
-    return true;
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -333,17 +297,21 @@ void Mapper<reader_key, reader_value, key, value>::loop()
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub> stub, std::shared_ptr<RecordReader<reader_key, reader_value>> reader)
+void Mapper<reader_key, reader_value, key, value>::DefaultTimerCallback(std::shared_ptr<Imagine_Rpc::Stub>& stub, std::shared_ptr<RecordReader<reader_key, reader_value>>& reader)
 {
+    IMAGINE_MAPREDUCE_LOG("Reader use count is %d, reader ptr is %p", reader.use_count(), reader.get());
     if (reader.use_count() == 1) {
+        reader->GetServer()->RemoveTimer(reader->GetTimerId());
         reader.reset();
+        stub->CloseConnection();
         stub.reset();
-        LOG_INFO("This Mapper Task Over!");
+        IMAGINE_MAPREDUCE_LOG("This Mapper Task Over!");
         return;
     }
     Internal::HeartBeatRequestMessage request_msg;
     Internal::HeartBeatResponseMessage response_msg;
     MapReduceUtil::GenerateHeartBeatProcessMessage(&request_msg, Internal::Identity::Mapper, reader->GetFileName(), reader->GetSplitId(), reader->GetProgress());
+    IMAGINE_MAPREDUCE_LOG("Task Progress Message is Sending!");
     stub->CallConnectServer(&request_msg, &response_msg);
 
     if (response_msg.status_() == Internal::Status::Ok) {

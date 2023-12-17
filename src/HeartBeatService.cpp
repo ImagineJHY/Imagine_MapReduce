@@ -1,6 +1,7 @@
 #include "Imagine_MapReduce/HeartBeatService.h"
 
-#include "Imagine_MapReduce/common_definition.h"
+#include "Imagine_MapReduce/log_macro.h"
+#include "Imagine_MapReduce/common_macro.h"
 #include "Imagine_MapReduce/HeartBeatMessage.pb.h"
 
 namespace Imagine_MapReduce
@@ -24,6 +25,7 @@ void HeartBeatService::Init()
 
 Imagine_Rpc::Status HeartBeatService::HeartBeatPacketProcessor(Imagine_Rpc::Context* context, HeartBeatRequestMessage* request_msg, HeartBeatResponseMessage* response_msg)
 {
+    IMAGINE_MAPREDUCE_LOG("Master Receive HeartBeat Packet!");
     if (request_msg->recv_identity_() != Identity::Master) {
         throw std::exception();
     }
@@ -44,15 +46,15 @@ Imagine_Rpc::Status HeartBeatService::HeartBeatPacketProcessor(Imagine_Rpc::Cont
 
 Imagine_Rpc::Status HeartBeatService::MapTaskHeartBeatPacketProcessor(Imagine_Rpc::Context* context, HeartBeatRequestMessage* request_msg, HeartBeatResponseMessage* response_msg)
 {
-    LOG_INFO("Map Task HeartBeat Packet!");
+    IMAGINE_MAPREDUCE_LOG("Map Task HeartBeat Packet!");
     switch (request_msg->task_status_())
     {
         case TaskStatus::Start :
-            LOG_INFO("File %s split %d Task Start!", request_msg->file_name_().c_str(), request_msg->split_id_());
+            IMAGINE_MAPREDUCE_LOG("File %s split %d Task Start!", request_msg->file_name_().c_str(), request_msg->split_id_());
             break;
         
         case TaskStatus::Process :
-            LOG_INFO("File %s split %d Task Processing Progress is %lf%!", request_msg->file_name_().c_str(), request_msg->split_id_(), request_msg->task_progress_());
+            IMAGINE_MAPREDUCE_LOG("File %s split %d Task Processing Progress is %lf%!", request_msg->file_name_().c_str(), request_msg->split_id_(), request_msg->task_progress_());
             break;
         
         default:
@@ -65,7 +67,7 @@ Imagine_Rpc::Status HeartBeatService::MapTaskHeartBeatPacketProcessor(Imagine_Rp
 
 Imagine_Rpc::Status HeartBeatService::ReduceTaskHeartBeatPacketProcessor(Imagine_Rpc::Context* context, HeartBeatRequestMessage* request_msg, HeartBeatResponseMessage* response_msg)
 {
-    LOG_INFO("Reduce Task HeartBeat Packet!");
+    IMAGINE_MAPREDUCE_LOG("Reduce Task HeartBeat Packet!");
 }
 
 } // namespace Internal

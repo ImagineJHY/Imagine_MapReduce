@@ -1,10 +1,58 @@
 #include "Imagine_MapReduce/KVBuffer.h"
 
+#include "Imagine_MapReduce/log_macro.h"
+#include "Imagine_MapReduce/common_macro.h"
+#include "Imagine_MapReduce/MapReduceUtil.h"
+
 namespace Imagine_MapReduce
 {
 
+KVBuffer::KVBuffer(int partition_num, int split_id, std::vector<std::vector<std::string>> &spill_files)
+    : partition_num_(partition_num), split_id_(split_id), buffer_size_(DEFAULT_SPLIT_BUFFER_SIZE), spill_size_(DEFAULT_SPILL_SIZE), spill_files_(spill_files)
+{
+    buffer_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(buffer_lock_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    spill_lock_ = new pthread_mutex_t;
+    if (pthread_mutex_init(spill_lock_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    spill_cond_ = new pthread_cond_t;
+    if (pthread_cond_init(spill_cond_, nullptr) != 0) {
+        throw std::exception();
+    }
+
+    buffer_ = new char[buffer_size_];
+    // equator=kv_idx=kv_border=meta_border=0;
+    // meta_idx=buffer_size-1;
+    meta_idx_ = equator_ = kv_border_ = meta_border_ = 0;
+    kv_idx_ = 1;
+    is_spilling_ = false;
+
+    spill_id_ = 1;
+    spill_buffer_ = false;
+    quit_ = new bool(false);
+    first_spilling_ = false;
+    delete_this_ = false;
+
+    spill_files_.resize(partition_num_);
+}
+
+KVBuffer::~KVBuffer()
+{
+    IMAGINE_MAPREDUCE_LOG("delete buffer");
+    delete[] buffer_;
+    delete buffer_lock_;
+    delete spill_lock_;
+    delete spill_cond_;
+}
+
 bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int partition_idx)
 {
+    IMAGINE_MAPREDUCE_LOG("Write KV to Buffer, key is %s, value is %s", content.first, content.second);
     bool flag = true;
     int key_len = strlen(content.first);
     int value_len = strlen(content.second);
@@ -16,7 +64,6 @@ bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int parti
     while (flag) {
         // 逻辑上保证kv_idx!=meta_idx恒成立,即永远不允许写满
         // kv_idx始终向上增长,meta_idx始终向下增长
-        //  printf("key is %d,value is %d!!!!!!!!!!!!!!!!!!!!!!!\n",key_len,value_len);
         pthread_mutex_lock(buffer_lock_);
         if (is_spilling_ ? WriteJudgementWithSpilling(content) : WriteJudgementWithoutSpilling(content)) {
             // 空间足够写入
@@ -81,7 +128,6 @@ bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int parti
                 memcpy(buffer_ + kv_idx_, key, key_len);
                 kv_idx_ += key_len;
 
-                // printf("valuepoint is %d\n",kv_idx);
                 value_point = kv_idx_;
                 memcpy(meta_info + sizeof(key_point), &value_point, sizeof(value_point));
 
@@ -103,7 +149,6 @@ bool KVBuffer::WriteToBuffer(const std::pair<char *, char *> &content, int parti
         } else {
             // 主动休眠
         }
-        // printf("content is key-%s,value-%s\n",content.first,content.second);
         pthread_mutex_unlock(buffer_lock_);
         if ((meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) * 1.0 / buffer_size_ <= spill_size_) {
             pthread_cond_signal(spill_cond_);
@@ -198,6 +243,42 @@ bool KVBuffer::Spilling()
     *quit_ = true;
 
     return true;
+}
+
+bool KVBuffer::WriteJudgementWithSpilling(const std::pair<char *, char *> &content) const
+{
+    if (static_cast<size_t>(kv_idx_ <= kv_border_ ? kv_border_ - kv_idx_ : buffer_size_ - kv_idx_ + kv_border_) < strlen((char *)(content.first)) + strlen((char *)(content.second)) || 
+        (meta_border_ <= meta_idx_ ? meta_idx_ - meta_border_ : meta_idx_ + buffer_size_ - meta_border_) < DEFAULT_META_SIZE) {
+        return false;
+    }
+
+    return true;
+}
+
+bool KVBuffer::WriteJudgementWithoutSpilling(const std::pair<char *, char *> &content) const
+{
+    if (static_cast<size_t>(meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) > strlen((char *)(content.first)) + strlen((char *)(content.second)) + DEFAULT_META_SIZE) {
+        return true;
+    }
+
+    return false;
+}
+
+bool KVBuffer::SpillBuffer()
+{
+    spill_buffer_ = true;
+    while (!(*quit_)) {
+        pthread_cond_broadcast(spill_cond_);
+    }
+    delete quit_;
+    delete_this_ = true;
+
+    return true;
+}
+
+bool KVBuffer::IsDeleteConditionSatisfy() const
+{
+    return delete_this_;
 }
 
 } // namespace Imagine_MapReduce

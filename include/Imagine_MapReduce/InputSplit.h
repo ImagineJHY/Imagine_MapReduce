@@ -9,19 +9,15 @@ namespace Imagine_MapReduce
 class InputSplit
 {
  public:
-    InputSplit(const std::string &file_name, int offset, int length) : file_name_(file_name), offset_(offset), length_(length) {}
+    InputSplit(const std::string &file_name, int offset, int length);
 
-    ~InputSplit(){};
+    ~InputSplit();
 
-    int GetLength() { return length_; }
+    int GetLength() const;
 
-    void GetLocations();
+    std::string GetFileName() const;
 
-    void GetLocationInfo();
-
-    std::string GetFileName() { return file_name_; }
-
-    int GetOffset() { return offset_; }
+    int GetOffset() const;
 
  private:
     std::string file_name_; // 文件名
