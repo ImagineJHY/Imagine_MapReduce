@@ -1,6 +1,7 @@
 #ifndef IMAGINE_MAPREDUCE_MAPPER_H
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
+#include "ThreadPool.h"
 #include "MapRunner.h"
 #include "MapReduceUtil.h"
 #include "MapTaskService.h"
@@ -41,6 +42,8 @@ class Mapper
     void Init(const YAML::Node& config);
 
     void InitLoop(const YAML::Node& config);
+
+    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(MapTaskHandler<reader_key, reader_value, key, value>* handler);
 
     void SetDefault();
 
@@ -86,6 +89,7 @@ class Mapper
     pthread_t *rpc_server_thread_;                                      // 用于开启RPC服务的主线程
     Partitioner<key> *partitioner_;                                     // partition对象类型
     Imagine_Rpc::Stub* stub_;                                           // stub原型
+    ThreadPool<std::shared_ptr<MapTaskHandler>>* thread_pool_;
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -116,6 +120,7 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
     delete output_format_;
     delete partitioner_;
     delete stub_;
+    delete thread_pool_;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -157,6 +162,12 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
         throw std::exception();
     }
 
+    try {
+        thread_pool_ = new ThreadPool<std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>>>(thread_num_, max_channel_num_); // 初始化线程池
+    } catch (...) {
+        throw std::exception();
+    }
+
     if (record_reader_ == nullptr) {
         SetDefaultRecordReader();
     }
@@ -176,6 +187,14 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
     rpc_server_ = new Imagine_Rpc::RpcServer(config);
     rpc_server_->RegisterService(new Internal::MapTaskService<reader_key, reader_value, key, value>(this));
     rpc_server_->RegisterService(new Internal::RetrieveSplitFileService());
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>> handler)
+{
+    thread_pool_->PutTask(handler);
+
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
