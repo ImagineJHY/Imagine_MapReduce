@@ -1,9 +1,10 @@
 #ifndef IMAGINE_MAPREDUCE_MAPPER_H
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
-#include "ThreadPool.h"
 #include "MapRunner.h"
+#include "ThreadPool.h"
 #include "MapReduceUtil.h"
+#include "MapTaskHandler.h"
 #include "MapTaskService.h"
 #include "LineRecordReader.h"
 #include "TextOutputFormat.h"
