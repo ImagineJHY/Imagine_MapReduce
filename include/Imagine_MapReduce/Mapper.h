@@ -47,7 +47,7 @@ class Mapper
 
     void InitLoop(const YAML::Node& config);
 
-    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const;
+    const Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const;
 
     void SetDefault();
 
@@ -198,7 +198,7 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const
+const Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const
 {
     thread_pool_->PutTask(handler);
 
