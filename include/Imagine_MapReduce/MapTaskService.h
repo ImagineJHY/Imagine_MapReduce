@@ -72,7 +72,7 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
         runner->SetTimerCallback(mapper_->GetTimerCallback());
         runner->SetHeartBeatStub(mapper_->GenerateNewStub());
         runner->SetCompleteStub(mapper_->GenerateNewStub());
-        mapper_->AddNewMapTaskHandler(std::make_shared<MapTaskService<reader_key, reader_value, key, value>>(runner));
+        mapper_->AddNewMapTaskHandler(std::make_shared<Internal::MapTaskService<reader_key, reader_value, key, value>>(runner));
     }
     response_msg->set_status_(Internal::Status::Ok);
     IMAGINE_MAPREDUCE_LOG("Set Response Message OK, response msg size is %d", response_msg->ByteSize());
