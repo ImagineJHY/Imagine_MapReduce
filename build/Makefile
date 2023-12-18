@@ -1089,6 +1089,33 @@ src/TextOutputFormat.cpp.s:
 	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/TextOutputFormat.cpp.s
 .PHONY : src/TextOutputFormat.cpp.s
 
+src/temp.o: src/temp.cpp.o
+
+.PHONY : src/temp.o
+
+# target to build an object file
+src/temp.cpp.o:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.o
+.PHONY : src/temp.cpp.o
+
+src/temp.i: src/temp.cpp.i
+
+.PHONY : src/temp.i
+
+# target to preprocess a source file
+src/temp.cpp.i:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.i
+.PHONY : src/temp.cpp.i
+
+src/temp.s: src/temp.cpp.s
+
+.PHONY : src/temp.s
+
+# target to generate assembly for a file
+src/temp.cpp.s:
+	$(MAKE) -f CMakeFiles/imagine_mapreduce.dir/build.make CMakeFiles/imagine_mapreduce.dir/src/temp.cpp.s
+.PHONY : src/temp.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -1188,6 +1215,9 @@ help:
 	@echo "... src/TextOutputFormat.o"
 	@echo "... src/TextOutputFormat.i"
 	@echo "... src/TextOutputFormat.s"
+	@echo "... src/temp.o"
+	@echo "... src/temp.i"
+	@echo "... src/temp.s"
 .PHONY : help
 
 

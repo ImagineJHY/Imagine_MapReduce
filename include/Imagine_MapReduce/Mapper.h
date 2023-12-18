@@ -22,6 +22,9 @@ namespace Internal
 {
 
 template <typename reader_key, typename reader_value, typename key, typename value>
+class MapTaskHandler;
+
+template <typename reader_key, typename reader_value, typename key, typename value>
 class MapTaskService;
 
 } // namespace Internal
@@ -44,7 +47,7 @@ class Mapper
 
     void InitLoop(const YAML::Node& config);
 
-    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>> handler);
+    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler);
 
     void SetDefault();
 
@@ -77,6 +80,8 @@ class Mapper
     // 配置文件字段
     std::string ip_;
     std::string port_;
+    size_t map_task_thread_num_;
+    size_t max_map_task_;
     bool singleton_log_mode_;
 
     Logger* logger_;
@@ -90,7 +95,7 @@ class Mapper
     pthread_t *rpc_server_thread_;                                      // 用于开启RPC服务的主线程
     Partitioner<key> *partitioner_;                                     // partition对象类型
     Imagine_Rpc::Stub* stub_;                                           // stub原型
-    ThreadPool<std::shared_ptr<MapTaskHandler>>* thread_pool_;
+    ThreadPool<std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>>>* thread_pool_;
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -140,6 +145,8 @@ void Mapper<reader_key, reader_value, key, value>::Init(const YAML::Node& config
 {
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
+    map_task_thread_num_ = config["map_task_thread_num"].as<size_t>();
+    max_map_task_ = config["max_map_task"].as<size_t>();
     singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
 
     if (singleton_log_mode_) {
@@ -164,7 +171,7 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
     }
 
     try {
-        thread_pool_ = new ThreadPool<std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>>>(thread_num_, max_channel_num_); // 初始化线程池
+        thread_pool_ = new ThreadPool<std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>>>(map_task_thread_num_, max_map_task_); // 初始化线程池
     } catch (...) {
         throw std::exception();
     }
@@ -191,7 +198,7 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
-Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>> handler)
+Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler)
 {
     thread_pool_->PutTask(handler);
 
