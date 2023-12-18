@@ -43,7 +43,7 @@ class Mapper
 
     void InitLoop(const YAML::Node& config);
 
-    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(MapTaskHandler<reader_key, reader_value, key, value>* handler);
+    Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<MapTaskHandler<reader_key, reader_value, key, value>> handler);
 
     void SetDefault();
 

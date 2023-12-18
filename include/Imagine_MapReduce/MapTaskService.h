@@ -70,7 +70,6 @@ Imagine_Rpc::Status MapTaskService<reader_key, reader_value, key, value>::MapTas
         runner->SetRecordReader(new_record_reader);
         IMAGINE_MAPREDUCE_LOG("Runner Get RecordReader, use count is %d", new_record_reader.use_count());
         runner->SetTimerCallback(mapper_->GetTimerCallback());
-        runner->SetThread(thread);
         runner->SetHeartBeatStub(mapper_->GenerateNewStub());
         runner->SetCompleteStub(mapper_->GenerateNewStub());
         mapper_->AddNewMapTaskHandler(std::make_shared<MapTaskService<reader_key, reader_value, key, value>>(runner));
