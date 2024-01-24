@@ -140,6 +140,9 @@ class KVBuffer
     bool IsDeleteConditionSatisfy() const;
 
  private:
+    bool Spill();
+
+ private:
     const int partition_num_;                                   // 分区数
     const int split_id_;                                        // splitId
     int spill_id_;                                              // 自增字段(第几次spilling)
