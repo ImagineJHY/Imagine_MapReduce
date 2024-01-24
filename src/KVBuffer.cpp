@@ -193,7 +193,7 @@ bool KVBuffer::Spilling()
     return true;
 }
 
-bool KVBuffer::Spill()
+void KVBuffer::Spill()
 {
     
     pthread_mutex_lock(buffer_lock_);

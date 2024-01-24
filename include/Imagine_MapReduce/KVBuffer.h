@@ -140,7 +140,7 @@ class KVBuffer
     bool IsDeleteConditionSatisfy() const;
 
  private:
-    bool Spill();
+    void Spill();
 
  private:
     const int partition_num_;                                   // 分区数
