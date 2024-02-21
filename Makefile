@@ -24,6 +24,13 @@ endif
 	cd ${tool_file_name} && make prepare
 
 build:
-	cd build && cmake .. && make imagine_mapreduce
+	cd build && cmake -DBUILD_MAPREDUCE=OFF .. && make imagine_mapreduce
+
+mapreduce:
+	cd build && cmake -DBUILD_MAPREDUCE=ON .. && make imagine_mapreduce
+
+generator:
+	cd build && cmake -DBUILD_RPC_SERVICE_GENERATOR=ON .. && make imagine_rpc_service_generator
+
 clean:
 	cd build && make clean

@@ -3,6 +3,7 @@
 /build/thirdparty/
 /build/CMakeCache.txt
 /build/cmake_install.cmake
+/build/
 
 
 # thirdparty

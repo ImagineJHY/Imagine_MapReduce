@@ -162,13 +162,14 @@ bool KVBuffer::Spilling()
 {
     pthread_mutex_lock(buffer_lock_);
     int written_size = meta_idx_ < kv_idx_ ? kv_idx_ - meta_idx_ : buffer_size_ - (meta_idx_ - kv_idx_);
+    // TODO : first_spilling_无意义, written_size也保证了缓冲区的清空, 原本逻辑无bug, 新逻辑下也可删除written_size
     pthread_mutex_unlock(buffer_lock_);
     while (!first_spilling_ || !spill_buffer_ || written_size != 1) {
         first_spilling_ = true;
         pthread_mutex_lock(spill_lock_);
 
         pthread_mutex_lock(buffer_lock_);
-        // Spill结束,保证spilling在临界区改变值
+        // Spill结束,保证spilling在临界区改变值(可以改为atomic类型)
         is_spilling_ = false;
         pthread_mutex_unlock(buffer_lock_);
 
@@ -177,62 +178,7 @@ bool KVBuffer::Spilling()
         }
         // 开始spill
         pthread_mutex_unlock(spill_lock_);
-        pthread_mutex_lock(buffer_lock_);
-        is_spilling_ = true;
-        int old_equator = equator_;
-        // int old_kv_idx = kv_idx_;
-        int old_meta_idx = meta_idx_ % buffer_size_;
-        equator_ = ((meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) / 2 + kv_idx_) % buffer_size_;
-        kv_border_ = (meta_idx_ + 1) % buffer_size_;
-        meta_border_ = kv_idx_ - 1;
-        if (meta_border_ < 0) {
-            meta_border_ = buffer_size_ - 1;
-        }
-        kv_idx_ = (equator_ + 1) % buffer_size_;
-        meta_idx_ = equator_;
-        pthread_mutex_unlock(buffer_lock_);
-        std::priority_queue<MetaIndex, std::vector<MetaIndex>, MetaCmp> meta_queue;
-        while ((old_meta_idx <= old_equator ? old_equator - old_meta_idx : buffer_size_ - old_meta_idx + old_equator) >= DEFAULT_META_SIZE) {
-            // printf("buffer_size is %d,meta_idx is %d,equator is %d\n",buffer_size,old_meta_idx,old_equator);
-            meta_queue.push(MetaIndex::GetMetaIndex(buffer_, (old_meta_idx + 1) % buffer_size_, buffer_size_));
-            old_meta_idx = (old_meta_idx + DEFAULT_META_SIZE) % buffer_size_;
-        }
-
-        // std::string file_name="split_"+MapReduceUtil::IntToString(split_id)+"_spill_"+MapReduceUtil::IntToString(spill_id)+"_shuffle_";
-        std::string file_name = "spill_" + MapReduceUtil::IntToString(spill_id_) + "_split_" + MapReduceUtil::IntToString(split_id_) + "_shuffle_";
-        int fds[partition_num_];
-        for (int i = 0; i < partition_num_; i++) {
-            spill_files_[i].push_back(file_name + MapReduceUtil::IntToString(i + 1) + ".txt");
-            fds[i] = open(&(spill_files_[i].back()[0]), O_CREAT | O_RDWR, 0777);
-        }
-
-        while (meta_queue.size()) {
-            MetaIndex top_meta = meta_queue.top();
-            meta_queue.pop();
-            int key_len = top_meta.GetKeyLen();
-            char *key = new char[key_len];
-            int value_len = top_meta.GetValueLen();
-            char *value = new char[value_len];
-            top_meta.GetKey(key);
-            top_meta.GetValue(value);
-
-            int fd = fds[top_meta.GetPartition() - 1];
-            write(fd, key, key_len);
-            char c = ' ';
-            write(fd, &c, 1);
-            write(fd, value, value_len);
-            char cc[] = "\r\n";
-            write(fd, cc, 2);
-
-            delete[] key;
-            delete[] value;
-        }
-        // spill_file_name.push_back(file_name);//装入临时文件名
-        spill_id_++;
-
-        for (int i = 0; i < partition_num_; i++) {
-            close(fds[i]);
-        }
+        Spill();
         // 尝试唤醒
 
 
@@ -240,9 +186,72 @@ bool KVBuffer::Spilling()
         written_size = meta_idx_ < kv_idx_ ? kv_idx_ - meta_idx_ : buffer_size_ - (meta_idx_ - kv_idx_);
         pthread_mutex_unlock(buffer_lock_);
     }
+    IMAGINE_MAPREDUCE_LOG("Start Last Spilling Process!");
+    Spill();
     *quit_ = true;
 
     return true;
+}
+
+void KVBuffer::Spill()
+{
+    
+    pthread_mutex_lock(buffer_lock_);
+    is_spilling_ = true;
+    int old_equator = equator_;
+    // int old_kv_idx = kv_idx_;
+    int old_meta_idx = meta_idx_ % buffer_size_;
+    equator_ = ((meta_idx_ < kv_idx_ ? buffer_size_ - (kv_idx_ - meta_idx_ - 1) : meta_idx_ - kv_idx_ + 1) / 2 + kv_idx_) % buffer_size_;
+    kv_border_ = (meta_idx_ + 1) % buffer_size_;
+    meta_border_ = kv_idx_ - 1;
+    if (meta_border_ < 0) {
+        meta_border_ = buffer_size_ - 1;
+    }
+    kv_idx_ = (equator_ + 1) % buffer_size_;
+    meta_idx_ = equator_;
+    pthread_mutex_unlock(buffer_lock_);
+    std::priority_queue<MetaIndex, std::vector<MetaIndex>, MetaCmp> meta_queue;
+    while ((old_meta_idx <= old_equator ? old_equator - old_meta_idx : buffer_size_ - old_meta_idx + old_equator) >= DEFAULT_META_SIZE) {
+        // printf("buffer_size is %d,meta_idx is %d,equator is %d\n",buffer_size,old_meta_idx,old_equator);
+        meta_queue.push(MetaIndex::GetMetaIndex(buffer_, (old_meta_idx + 1) % buffer_size_, buffer_size_));
+        old_meta_idx = (old_meta_idx + DEFAULT_META_SIZE) % buffer_size_;
+    }
+    if (meta_queue.size() == 0) return;
+    // std::string file_name="split_"+MapReduceUtil::IntToString(split_id)+"_spill_"+MapReduceUtil::IntToString(spill_id)+"_shuffle_";
+    std::string file_name = "spill_" + MapReduceUtil::IntToString(spill_id_) + "_split_" + MapReduceUtil::IntToString(split_id_) + "_shuffle_";
+    int fds[partition_num_];
+    for (int i = 0; i < partition_num_; i++) {
+        spill_files_[i].push_back(file_name + MapReduceUtil::IntToString(i + 1) + ".txt");
+        fds[i] = open(&(spill_files_[i].back()[0]), O_CREAT | O_RDWR, 0777);
+    }
+
+    while (meta_queue.size()) {
+        MetaIndex top_meta = meta_queue.top();
+        meta_queue.pop();
+        int key_len = top_meta.GetKeyLen();
+        char *key = new char[key_len];
+        int value_len = top_meta.GetValueLen();
+        char *value = new char[value_len];
+        top_meta.GetKey(key);
+        top_meta.GetValue(value);
+
+        int fd = fds[top_meta.GetPartition() - 1];
+        write(fd, key, key_len);
+        char c = ' ';
+        write(fd, &c, 1);
+        write(fd, value, value_len);
+        char cc[] = "\r\n";
+        write(fd, cc, 2);
+
+        delete[] key;
+        delete[] value;
+    }
+    // spill_file_name.push_back(file_name);//装入临时文件名
+    spill_id_++;
+
+    for (int i = 0; i < partition_num_; i++) {
+        close(fds[i]);
+    }
 }
 
 bool KVBuffer::WriteJudgementWithSpilling(const std::pair<char *, char *> &content) const

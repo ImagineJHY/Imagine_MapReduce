@@ -2,7 +2,9 @@
 #define IMAGINE_MAPREDUCE_MAPPER_H
 
 #include "MapRunner.h"
+#include "ThreadPool.h"
 #include "MapReduceUtil.h"
+#include "MapTaskHandler.h"
 #include "MapTaskService.h"
 #include "LineRecordReader.h"
 #include "TextOutputFormat.h"
@@ -18,6 +20,9 @@ namespace Imagine_MapReduce
 
 namespace Internal
 {
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+class MapTaskHandler;
 
 template <typename reader_key, typename reader_value, typename key, typename value>
 class MapTaskService;
@@ -41,6 +46,8 @@ class Mapper
     void Init(const YAML::Node& config);
 
     void InitLoop(const YAML::Node& config);
+
+    const Mapper<reader_key, reader_value, key, value>* AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const;
 
     void SetDefault();
 
@@ -73,6 +80,8 @@ class Mapper
     // 配置文件字段
     std::string ip_;
     std::string port_;
+    size_t map_task_thread_num_;
+    size_t max_map_task_;
     bool singleton_log_mode_;
 
     Logger* logger_;
@@ -86,6 +95,7 @@ class Mapper
     pthread_t *rpc_server_thread_;                                      // 用于开启RPC服务的主线程
     Partitioner<key> *partitioner_;                                     // partition对象类型
     Imagine_Rpc::Stub* stub_;                                           // stub原型
+    ThreadPool<std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>>>* thread_pool_;
 };
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -116,6 +126,7 @@ Mapper<reader_key, reader_value, key, value>::~Mapper()
     delete output_format_;
     delete partitioner_;
     delete stub_;
+    delete thread_pool_;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
@@ -134,6 +145,8 @@ void Mapper<reader_key, reader_value, key, value>::Init(const YAML::Node& config
 {
     ip_ = config["ip"].as<std::string>();
     port_ = config["port"].as<std::string>();
+    map_task_thread_num_ = config["map_task_thread_num"].as<size_t>();
+    max_map_task_ = config["max_map_task"].as<size_t>();
     singleton_log_mode_ = config["singleton_log_mode"].as<bool>();
 
     if (singleton_log_mode_) {
@@ -157,6 +170,12 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
         throw std::exception();
     }
 
+    try {
+        thread_pool_ = new ThreadPool<std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>>>(map_task_thread_num_, max_map_task_); // 初始化线程池
+    } catch (...) {
+        throw std::exception();
+    }
+
     if (record_reader_ == nullptr) {
         SetDefaultRecordReader();
     }
@@ -176,6 +195,14 @@ void Mapper<reader_key, reader_value, key, value>::InitLoop(const YAML::Node& co
     rpc_server_ = new Imagine_Rpc::RpcServer(config);
     rpc_server_->RegisterService(new Internal::MapTaskService<reader_key, reader_value, key, value>(this));
     rpc_server_->RegisterService(new Internal::RetrieveSplitFileService());
+}
+
+template <typename reader_key, typename reader_value, typename key, typename value>
+const Mapper<reader_key, reader_value, key, value>* Mapper<reader_key, reader_value, key, value>::AddNewMapTaskHandler(std::shared_ptr<Internal::MapTaskHandler<reader_key, reader_value, key, value>> handler) const
+{
+    thread_pool_->PutTask(handler);
+
+    return this;
 }
 
 template <typename reader_key, typename reader_value, typename key, typename value>
