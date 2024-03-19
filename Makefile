@@ -23,6 +23,9 @@ endif
 	cd ${system_file_name} && make prepare
 	cd ${tool_file_name} && make prepare
 
+proto_init:
+	./proto_generate.sh
+
 build:
 	cd build && cmake -DBUILD_MAPREDUCE=OFF .. && make imagine_mapreduce
 
